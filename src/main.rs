@@ -1,3 +1,4 @@
+mod http;
 mod logger;
 
 use dope::executor::{self, reactor, Executor};
@@ -12,7 +13,8 @@ async fn process(reactor: reactor::Handle, mut stream: TcpStream) -> Result<(), 
     log::warn!("SPAWNED");
     let mut buf = [0u8; 1024];
     let len = stream.read(&mut buf).await?;
-    log::debug!("{:?}", String::from_utf8(buf[..len].to_vec()));
+    // log::debug!("{:?}", String::from_utf8(buf[..len].to_vec()));
+    log::debug!("{:?}", http::Request::parse(&buf[..len]));
 
     let payload = "Hello, world!";
     let to_write = format!("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {}\r\nConnection: Closed\r\n\r\n{}", payload.len(), payload);

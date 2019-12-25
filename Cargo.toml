@@ -12,3 +12,4 @@ chrono = "*"
 color-backtrace = { version = "*", features = ["failure-bt"] }
 failure = "*"
 log = "*"
+nom = "*"
