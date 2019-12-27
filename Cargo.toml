@@ -5,7 +5,8 @@ authors = ["inkyu <gofiri@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-dope = {git = "https://github.com/inq/dope"}
+dope = {path = "../dope"}
+html = {path = "deps/html"}
 
 futures = "*"
 chrono = "*"

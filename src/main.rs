@@ -1,3 +1,4 @@
+#![feature(proc_macro_hygiene)]
 mod http;
 mod logger;
 
@@ -43,6 +44,12 @@ fn main() -> Result<(), failure::Error> {
     color_backtrace::install();
     log::set_logger(&logger::Logger).unwrap();
     log::set_max_level(log::LevelFilter::Debug);
+
+    println!("{:?}", html::html!(
+        hello
+            hihi
+                hoho:
+    ));
 
     let executor = Executor::new()?;
     let handle = executor.handle();
