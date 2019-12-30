@@ -46,8 +46,8 @@ fn main() -> Result<(), failure::Error> {
     log::set_max_level(log::LevelFilter::Debug);
 
     println!(
-        "{:?}",
-        html::html!(
+        "{}",
+        html_macro::html!(
             html
                 span.hello
                     Hello
