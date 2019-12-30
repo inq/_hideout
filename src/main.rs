@@ -45,11 +45,15 @@ fn main() -> Result<(), failure::Error> {
     log::set_logger(&logger::Logger).unwrap();
     log::set_max_level(log::LevelFilter::Debug);
 
-    println!("{:?}", html::html!(
-        hello
-            hihi
-                hoho:
-    ));
+    println!(
+        "{:?}",
+        html::html!(
+            html
+                span.hello
+                    Hello
+                .hello
+        )
+    );
 
     let executor = Executor::new()?;
     let handle = executor.handle();
