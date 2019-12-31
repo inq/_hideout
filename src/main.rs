@@ -14,15 +14,12 @@ async fn process(reactor: reactor::Handle, mut stream: TcpStream) -> Result<(), 
     log::warn!("SPAWNED");
     let mut buf = [0u8; 1024];
     let len = stream.read(&mut buf).await?;
-    // log::debug!("{:?}", String::from_utf8(buf[..len].to_vec()));
     log::debug!("{:?}", http::Request::parse(&buf[..len]));
 
     let payload = "Hello, world!";
-    let to_write = format!("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {}\r\nConnection: Closed\r\n\r\n{}", payload.len(), payload);
-    stream.write(to_write.as_bytes()).await?;
-
+    let response = http::Response::new_html(200, String::from(payload));
+    stream.write(response.to_string().as_bytes()).await?;
     stream.close().await?;
-
     Ok(())
 }
 
