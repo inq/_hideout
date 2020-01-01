@@ -46,9 +46,8 @@ fn main() -> Result<(), failure::Error> {
         "{}",
         html_macro::html!(
             html
-                span.hello
-                    Hello
-                .hello
+                span.hello "Hello, world!"
+                .hello {1}
         )
     );
 
