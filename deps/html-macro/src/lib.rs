@@ -9,12 +9,14 @@ use quote::quote;
 
 #[proc_macro]
 pub fn html(input: TokenStream) -> TokenStream {
-    let parser = Parser::from_tokens(input.into_iter());
-    println!("{:?}", parser);
+    let parser = Parser::from_tokens(input.into_iter()).unwrap();
+    let res = parser.build().unwrap();
+    println!("{:?}", res);
 
     quote!(html::Tag::new(
         String::from("div"),
-        vec![html::Content::Text(String::from("Hello"))]
+        vec![],
+        vec![html::Content::Text(String::from("Hello"))],
     ))
     .into()
 }

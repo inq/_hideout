@@ -1,3 +1,4 @@
+use html::{Content, Tag};
 use proc_macro::{token_stream, TokenTree};
 
 #[derive(Debug)]
@@ -47,9 +48,87 @@ pub struct Line {
     nodes: Vec<Node>,
 }
 
+impl Line {
+    pub fn process(self) -> Option<BuilderNode> {
+        #[derive(Debug)]
+        enum State {
+            StandBy,
+            HasIdent,
+            NeedClassName,
+        };
+        let mut state = State::StandBy;
+        let mut tag = None;
+        let mut contents = vec![];
+        let mut class_names = vec![];
+
+        for node in self.nodes.into_iter() {
+            match (&state, node) {
+                (State::StandBy, Node::Ident(ident)) => {
+                    tag = Some(ident);
+                    state = State::HasIdent;
+                }
+                (State::StandBy, Node::Punct('.')) => {
+                    tag = Some(String::from("div"));
+                    state = State::NeedClassName;
+                }
+                (State::HasIdent, Node::Punct('.')) => {
+                    state = State::NeedClassName;
+                }
+                (State::HasIdent, Node::Literal(literal)) => {
+                    // TODO: Implement more
+                    contents.push(literal);
+                }
+                (State::HasIdent, Node::NotImplemented) => {
+                    // TODO: Implement
+                    contents.push(String::from(""))
+                }
+                (State::NeedClassName, Node::Ident(ident)) => {
+                    class_names.push(ident);
+                    state = State::HasIdent;
+                }
+                (state, node) => {
+                    panic!("{:?}, {:?}", state, node);
+                }
+            }
+        }
+        Some(BuilderNode {
+            level: self.level,
+            tag: tag?,
+            class_names,
+            contents,
+            children: vec![],
+        })
+    }
+}
+
 #[derive(Debug)]
 pub struct Parser {
     lines: Vec<Line>,
+}
+
+#[derive(Debug)]
+pub struct BuilderNode {
+    level: usize,
+    tag: String,
+    class_names: Vec<String>,
+    contents: Vec<String>, // TODO: Use enum
+    children: Vec<Content>,
+}
+
+impl BuilderNode {
+    pub fn into_tag(self) -> Tag {
+        let contents = if !self.contents.is_empty() {
+            self.contents.into_iter().map(Content::Text).collect()
+        } else {
+            self.children
+        };
+        Tag::new(self.tag, self.class_names, contents)
+    }
+
+    pub fn set_children(&mut self, children: Vec<Content>) {
+        assert!(self.contents.is_empty(), "{:?}", self.contents);
+        self.children = children;
+    }
 }
 
 impl Parser {
@@ -69,5 +148,58 @@ impl Parser {
         }
         lines.push(current_line.build()?);
         Some(Self { lines })
+    }
+
+    fn clean_stack(stack: &mut Vec<BuilderNode>) {
+        let leaf_level = stack.last().unwrap().level;
+        let mut leaves = vec![];
+        while stack.last().unwrap().level == leaf_level {
+            leaves.push(Content::Tag(stack.pop().unwrap().into_tag()));
+        }
+        leaves.reverse();
+
+        let parent = stack.last_mut().unwrap();
+        parent.set_children(leaves);
+    }
+
+    pub fn build(self) -> Option<Tag> {
+        #[derive(Debug)]
+        enum State {
+            BackIndent,
+            Sibling,
+            Indent,
+            Empty,
+        }
+
+        let mut stack: Vec<BuilderNode> = vec![];
+        for line in self.lines.into_iter() {
+            let node = line.process()?;
+
+            loop {
+                let state = if let Some(last) = stack.last() {
+                    use std::cmp::Ordering;
+                    match node.level.cmp(&last.level) {
+                        Ordering::Greater => State::Indent,
+                        Ordering::Less => State::BackIndent,
+                        Ordering::Equal => State::Sibling,
+                    }
+                } else {
+                    State::Empty
+                };
+                match state {
+                    State::BackIndent => {
+                        Self::clean_stack(&mut stack);
+                    }
+                    State::Empty | State::Indent | State::Sibling => {
+                        stack.push(node);
+                        break;
+                    }
+                }
+            }
+        }
+        while stack.len() > 1 {
+            Self::clean_stack(&mut stack);
+        }
+        Some(stack.pop().unwrap().into_tag())
     }
 }

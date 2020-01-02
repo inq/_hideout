@@ -18,6 +18,7 @@ impl fmt::Display for Content {
 #[derive(Debug)]
 pub struct Tag {
     name: String,
+    class_names: Vec<String>,
     contents: Vec<Content>,
 }
 
@@ -32,7 +33,7 @@ impl fmt::Display for Tag {
 }
 
 impl Tag {
-    pub fn new(name: String, contents: Vec<Content>) -> Self {
-        Self { name, contents }
+    pub fn new(name: String, class_names: Vec<String>, contents: Vec<Content>) -> Self {
+        Self { name, class_names, contents }
     }
 }
