@@ -80,7 +80,7 @@ impl Line {
                 }
                 (State::HasIdent, Node::NotImplemented) => {
                     // TODO: Implement
-                    contents.push(String::from(""))
+                    contents.push(String::from("\"\""))
                 }
                 (State::NeedClassName, Node::Ident(ident)) => {
                     class_names.push(ident);
@@ -162,7 +162,7 @@ impl Parser {
         parent.set_children(leaves);
     }
 
-    pub fn build(self) -> Option<Tag> {
+    pub fn build(self) -> Option<Content> {
         #[derive(Debug)]
         enum State {
             BackIndent,
@@ -200,6 +200,6 @@ impl Parser {
         while stack.len() > 1 {
             Self::clean_stack(&mut stack);
         }
-        Some(stack.pop().unwrap().into_tag())
+        Some(Content::Tag(stack.pop().unwrap().into_tag()))
     }
 }

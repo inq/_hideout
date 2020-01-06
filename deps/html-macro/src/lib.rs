@@ -1,22 +1,16 @@
 #![feature(proc_macro_span)]
 extern crate proc_macro;
 
+mod content_wrapper;
 mod parser;
 
 use parser::Parser;
 use proc_macro::TokenStream;
-use quote::quote;
 
 #[proc_macro]
 pub fn html(input: TokenStream) -> TokenStream {
     let parser = Parser::from_tokens(input.into_iter()).unwrap();
     let res = parser.build().unwrap();
-    println!("{:?}", res);
-
-    quote!(html::Tag::new(
-        String::from("div"),
-        vec![],
-        vec![html::Content::Text(String::from("Hello"))],
-    ))
-    .into()
+    let wrapper = content_wrapper::ContentWrapper::new(&res);
+    format!("{}", wrapper).parse().unwrap()
 }

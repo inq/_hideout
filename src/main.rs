@@ -11,13 +11,19 @@ async fn process(reactor: reactor::Handle, mut stream: TcpStream) -> Result<(), 
 
     Delay::start(reactor, chrono::Duration::seconds(1))?.await?;
 
-    log::warn!("SPAWNED");
     let mut buf = [0u8; 1024];
     let len = stream.read(&mut buf).await?;
     log::debug!("{:?}", http::Request::parse(&buf[..len]));
 
-    let payload = "Hello, world!";
-    let response = http::Response::new_html(200, String::from(payload));
+    let payload = format!(
+        "{}",
+        html_macro::html!(
+            html
+                span.hello "This is from MACRO!"
+                .hello {1}
+        )
+    );
+    let response = http::Response::new_html(200, payload);
     stream.write(response.to_string().as_bytes()).await?;
     stream.close().await?;
     Ok(())
@@ -41,15 +47,6 @@ fn main() -> Result<(), failure::Error> {
     color_backtrace::install();
     log::set_logger(&logger::Logger).unwrap();
     log::set_max_level(log::LevelFilter::Debug);
-
-    println!(
-        "{}",
-        html_macro::html!(
-            html
-                span.hello "Hello, world!"
-                .hello {1}
-        )
-    );
 
     let executor = Executor::new()?;
     let handle = executor.handle();
