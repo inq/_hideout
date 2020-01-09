@@ -6,8 +6,6 @@ edition = "2018"
 
 [dependencies]
 dope = {path = "../dope"}
-html = {path = "deps/html"}
-html_macro = {path = "deps/html-macro"}
 
 futures = "*"
 chrono = "*"
@@ -15,3 +13,4 @@ color-backtrace = { version = "*", features = ["failure-bt"] }
 failure = "*"
 log = "*"
 nom = "*"
+tent = "*"

@@ -17,10 +17,10 @@ async fn process(reactor: reactor::Handle, mut stream: TcpStream) -> Result<(), 
 
     let payload = format!(
         "{}",
-        html_macro::html!(
+        tent::html!(
             html
                 span.hello "This is from MACRO!"
-                .hello {1}
+                .hello {1 + 1}
         )
     );
     let response = http::Response::new_html(200, payload);
