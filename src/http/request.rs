@@ -5,6 +5,8 @@ use nom::multi::many1;
 use nom::sequence::terminated;
 use nom::IResult;
 
+use std::fmt::{self, Debug};
+
 #[derive(Clone, Debug)]
 pub enum Method {
     Options,
@@ -23,11 +25,22 @@ pub enum Version {
     Http11,
 }
 
-#[derive(Debug)]
 pub struct RequestLine<'a> {
     method: Method,
     uri: &'a [u8],
     version: Version,
+}
+
+impl<'a> Debug for RequestLine<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "RequestLine {{ {:?} {:?} {:?} }}",
+            self.method,
+            std::str::from_utf8(self.uri).or(Err(fmt::Error))?,
+            self.version
+        )
+    }
 }
 
 fn is_token(c: u8) -> bool {
@@ -108,10 +121,20 @@ pub struct Request<'a> {
     body: &'a [u8],
 }
 
-#[derive(Debug)]
 pub struct Header<'a> {
     name: &'a [u8],
     value: &'a [u8],
+}
+
+impl<'a> Debug for Header<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{:?}: {:?}",
+            std::str::from_utf8(self.name).or(Err(fmt::Error))?,
+            std::str::from_utf8(self.value).or(Err(fmt::Error))?,
+        )
+    }
 }
 
 fn header<'a>(input: &'a [u8]) -> IResult<&'a [u8], Header<'a>> {
