@@ -1,12 +1,30 @@
 #![feature(proc_macro_hygiene)]
 mod http;
 mod logger;
+mod router;
 
 use dope::executor::{self, reactor, Executor};
 use dope::net::{TcpListener, TcpStream};
 use dope::timer::Delay;
 
-async fn process(reactor: reactor::Handle, mut stream: TcpStream) -> Result<(), failure::Error> {
+use router::Router;
+
+fn handler_index(uri: &str) {
+    log::info!("HANDLER TEST: {}", uri);
+}
+
+thread_local! {
+    pub static ROUTER: Router = {
+        let mut builder  = router::Builder::new();
+        builder.add_path("/hello", &handler_index);
+        builder.build()
+    };
+}
+
+async fn process<'a>(
+    reactor: reactor::Handle,
+    mut stream: TcpStream,
+) -> Result<(), failure::Error> {
     use futures::{AsyncReadExt, AsyncWriteExt};
 
     Delay::start(reactor, chrono::Duration::seconds(1))?.await?;
@@ -24,12 +42,17 @@ async fn process(reactor: reactor::Handle, mut stream: TcpStream) -> Result<(), 
         )
     );
     let response = http::Response::new_html(200, payload);
+
+    ROUTER.with(|router| router.test_handle("TEST HANDLE"));
+
+    log::debug!("response");
     stream.write(response.to_string().as_bytes()).await?;
+    log::debug!("wrote");
     stream.close().await?;
     Ok(())
 }
 
-async fn main_async(executor: &executor::Handle) -> Result<(), failure::Error> {
+async fn main_async<'a>(executor: &executor::Handle) -> Result<(), failure::Error> {
     let reactor = executor.reactor()?;
     use futures::StreamExt;
 
