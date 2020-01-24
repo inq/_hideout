@@ -9,8 +9,16 @@ use dope::timer::Delay;
 
 use router::Router;
 
-fn handler_index(uri: &str) {
-    log::info!("HANDLER TEST: {}", uri);
+fn handler_index(_uri: &str) -> http::Response {
+    let payload = format!(
+        "{}",
+        tent::html!(
+            html
+                span.hello "This is from MACRO!"
+                .hello {_uri}
+        )
+    );
+    http::Response::new_html(200, payload)
 }
 
 lazy_static::lazy_static! {
@@ -33,21 +41,9 @@ async fn process<'a>(
     let len = stream.read(&mut buf).await?;
     log::debug!("{:?}", http::Request::parse(&buf[..len]));
 
-    let payload = format!(
-        "{}",
-        tent::html!(
-            html
-                span.hello "This is from MACRO!"
-                .hello {1 + 1}
-        )
-    );
-    let response = http::Response::new_html(200, payload);
+    let response = ROUTER.test_handle("TEST HANDLE");
 
-    ROUTER.test_handle("TEST HANDLE");
-
-    log::debug!("response");
     stream.write(response.to_string().as_bytes()).await?;
-    log::debug!("wrote");
     stream.close().await?;
     Ok(())
 }
