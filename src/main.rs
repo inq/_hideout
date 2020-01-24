@@ -13,10 +13,10 @@ fn handler_index(uri: &str) {
     log::info!("HANDLER TEST: {}", uri);
 }
 
-thread_local! {
-    pub static ROUTER: Router = {
+lazy_static::lazy_static! {
+    static ref ROUTER: Router = {
         let mut builder  = router::Builder::new();
-        builder.add_path("/hello", &handler_index);
+        builder.add_path("/hello", handler_index);
         builder.build()
     };
 }
@@ -43,7 +43,7 @@ async fn process<'a>(
     );
     let response = http::Response::new_html(200, payload);
 
-    ROUTER.with(|router| router.test_handle("TEST HANDLE"));
+    ROUTER.test_handle("TEST HANDLE");
 
     log::debug!("response");
     stream.write(response.to_string().as_bytes()).await?;
