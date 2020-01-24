@@ -168,4 +168,8 @@ impl<'a> Request<'a> {
             _ => None,
         }
     }
+
+    pub fn uri(&self) -> Result<&str, std::str::Utf8Error> {
+        std::str::from_utf8(self.request_line.uri)
+    }
 }

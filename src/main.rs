@@ -9,13 +9,13 @@ use dope::timer::Delay;
 
 use router::Router;
 
-fn handler_index(_uri: &str) -> http::Response {
+fn handler_index(uri: &str) -> http::Response {
     let payload = format!(
         "{}",
         tent::html!(
             html
                 span.hello "This is from MACRO!"
-                .hello {_uri}
+                .hello {format!("given uri: {}", uri)}
         )
     );
     http::Response::new_html(200, payload)
@@ -39,11 +39,11 @@ async fn process<'a>(
 
     let mut buf = [0u8; 1024];
     let len = stream.read(&mut buf).await?;
-    log::debug!("{:?}", http::Request::parse(&buf[..len]));
-
-    let response = ROUTER.test_handle("TEST HANDLE");
-
-    stream.write(response.to_string().as_bytes()).await?;
+    if let Some(request) = http::Request::parse(&buf[..len]) {
+        let uri = request.uri()?;
+        let response = ROUTER.test_handle(uri);
+        stream.write(response.to_string().as_bytes()).await?;
+    }
     stream.close().await?;
     Ok(())
 }
