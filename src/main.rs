@@ -5,7 +5,6 @@ mod router;
 
 use dope::executor::{self, reactor, Executor};
 use dope::net::{TcpListener, TcpStream};
-use dope::timer::Delay;
 
 use router::Router;
 
@@ -30,12 +29,10 @@ lazy_static::lazy_static! {
 }
 
 async fn process<'a>(
-    reactor: reactor::Handle,
+    _reactor: reactor::Handle,
     mut stream: TcpStream,
 ) -> Result<(), failure::Error> {
     use futures::{AsyncReadExt, AsyncWriteExt};
-
-    Delay::start(reactor, chrono::Duration::seconds(1))?.await?;
 
     let mut buf = [0u8; 1024];
     let len = stream.read(&mut buf).await?;
