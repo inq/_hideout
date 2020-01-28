@@ -13,7 +13,31 @@ fn handler_index(uri: &str) -> http::Response {
         "{}",
         tent::html!(
             html
-                span.hello "This is from MACRO!"
+                span.hello "Index page"
+                .hello {format!("given uri: {}", uri)}
+        )
+    );
+    http::Response::new_html(200, payload)
+}
+
+fn handler_hello(uri: &str) -> http::Response {
+    let payload = format!(
+        "{}",
+        tent::html!(
+            html
+                span.hello "HELLO!"
+                .hello {format!("given uri: {}", uri)}
+        )
+    );
+    http::Response::new_html(200, payload)
+}
+
+fn handler_hello_world(uri: &str) -> http::Response {
+    let payload = format!(
+        "{}",
+        tent::html!(
+            html
+                span.hello "HELLO, WORLD!"
                 .hello {format!("given uri: {}", uri)}
         )
     );
@@ -22,9 +46,11 @@ fn handler_index(uri: &str) -> http::Response {
 
 lazy_static::lazy_static! {
     static ref ROUTER: Router = {
-        let mut builder  = router::Builder::new();
-        builder.add_path("/hello", handler_index);
-        builder.build()
+        let mut router  = Router::new();
+        router.add_path("/hello/world", handler_hello_world);
+        router.add_path("/hello", handler_hello);
+        router.add_path("/", handler_index);
+        router
     };
 }
 
@@ -38,8 +64,14 @@ async fn process<'a>(
     let len = stream.read(&mut buf).await?;
     if let Some(request) = http::Request::parse(&buf[..len]) {
         let uri = request.uri()?;
-        let response = ROUTER.test_handle(uri);
-        stream.write(response.to_string().as_bytes()).await?;
+        if let Some(handler) = ROUTER.route(uri) {
+            log::info!("ROUTE: {}", uri);
+            let response = handler(uri);
+            stream.write(response.to_string().as_bytes()).await?;
+        } else {
+            // TODO: Implement 404 error page
+            log::info!("404: {}", uri);
+        }
     }
     stream.close().await?;
     Ok(())
