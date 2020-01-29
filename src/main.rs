@@ -1,4 +1,5 @@
 #![feature(proc_macro_hygiene)]
+mod handler;
 mod http;
 mod logger;
 mod router;
@@ -8,69 +9,13 @@ use dope::net::{TcpListener, TcpStream};
 
 use router::Router;
 
-fn handle_index(uri: &str) -> http::Response {
-    let payload = format!(
-        "{}",
-        tent::html!(
-            html
-                span.hello "Index page"
-                .hello {format!("given uri: {}", uri)}
-        )
-    );
-    http::Response::new_html(200, payload)
-}
-
-fn handle_hello(uri: &str) -> http::Response {
-    let payload = format!(
-        "{}",
-        tent::html!(
-            html
-                span.hello "HELLO!"
-                .hello {format!("given uri: {}", uri)}
-        )
-    );
-    http::Response::new_html(200, payload)
-}
-
-fn handle_hello_world(uri: &str) -> http::Response {
-    let payload = format!(
-        "{}",
-        tent::html!(
-            html
-                span.hello "HELLO, WORLD!"
-                .hello {format!("given uri: {}", uri)}
-        )
-    );
-    http::Response::new_html(200, payload)
-}
-
-fn handle_not_found(uri: &str) -> http::Response {
-    let payload = format!(
-        "{}",
-        tent::html!(
-            html
-                span.hello "404 Not Found"
-                .hello {format!("given uri: {}", uri)}
-        )
-    );
-    http::Response::new_html(404, payload)
-}
-
-fn handle_stylesheet(_uri: &str) -> http::Response {
-    let payload = r#"
-    body {
-        text-align: center;
-    }"#;
-    http::Response::new_html(200, payload.to_string())
-}
-
 lazy_static::lazy_static! {
     static ref ROUTER: Router = {
         let mut router  = Router::new();
-        router.add_path("/hello/world", handle_hello_world);
-        router.add_path("/hello", handle_hello);
-        router.add_path("/", handle_index);
-        router.add_path("/main.css", handle_stylesheet);
+        router.add_path("/hello/world", handler::hello_world);
+        router.add_path("/hello", handler::hello);
+        router.add_path("/", handler::index);
+        router.add_path("/main.css", handler::stylesheet);
         router
     };
 }
@@ -89,7 +34,7 @@ async fn process<'a>(
             log::info!("ROUTE: {}", uri);
             hande(uri)
         } else {
-            handle_not_found(uri)
+            handler::not_found(uri)
         };
         stream.write(response.to_string().as_bytes()).await?;
     }

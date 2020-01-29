@@ -21,10 +21,10 @@ impl Router {
 
     pub fn add_path(&mut self, path: &str, handler: Handler) -> &mut Self {
         let mut current_node = &mut self.root;
-        let mut elems = path.split("/");
+        let mut elems = path.split('/');
 
         // Path should start with '/'
-        assert!(elems.next().unwrap().len() == 0);
+        assert!(elems.next().unwrap().is_empty());
         if path.len() > 1 {
             for elem in elems {
                 if current_node.children.contains_key(elem) {
