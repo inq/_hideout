@@ -8,7 +8,7 @@ use dope::net::{TcpListener, TcpStream};
 
 use router::Router;
 
-fn handler_index(uri: &str) -> http::Response {
+fn handle_index(uri: &str) -> http::Response {
     let payload = format!(
         "{}",
         tent::html!(
@@ -20,7 +20,7 @@ fn handler_index(uri: &str) -> http::Response {
     http::Response::new_html(200, payload)
 }
 
-fn handler_hello(uri: &str) -> http::Response {
+fn handle_hello(uri: &str) -> http::Response {
     let payload = format!(
         "{}",
         tent::html!(
@@ -32,7 +32,7 @@ fn handler_hello(uri: &str) -> http::Response {
     http::Response::new_html(200, payload)
 }
 
-fn handler_hello_world(uri: &str) -> http::Response {
+fn handle_hello_world(uri: &str) -> http::Response {
     let payload = format!(
         "{}",
         tent::html!(
@@ -44,7 +44,7 @@ fn handler_hello_world(uri: &str) -> http::Response {
     http::Response::new_html(200, payload)
 }
 
-fn handler_not_found(uri: &str) -> http::Response {
+fn handle_not_found(uri: &str) -> http::Response {
     let payload = format!(
         "{}",
         tent::html!(
@@ -56,12 +56,21 @@ fn handler_not_found(uri: &str) -> http::Response {
     http::Response::new_html(404, payload)
 }
 
+fn handle_stylesheet(_uri: &str) -> http::Response {
+    let payload = r#"
+    body {
+        text-align: center;
+    }"#;
+    http::Response::new_html(200, payload.to_string())
+}
+
 lazy_static::lazy_static! {
     static ref ROUTER: Router = {
         let mut router  = Router::new();
-        router.add_path("/hello/world", handler_hello_world);
-        router.add_path("/hello", handler_hello);
-        router.add_path("/", handler_index);
+        router.add_path("/hello/world", handle_hello_world);
+        router.add_path("/hello", handle_hello);
+        router.add_path("/", handle_index);
+        router.add_path("/main.css", handle_stylesheet);
         router
     };
 }
@@ -76,11 +85,11 @@ async fn process<'a>(
     let len = stream.read(&mut buf).await?;
     if let Some(request) = http::Request::parse(&buf[..len]) {
         let uri = request.uri()?;
-        let response = if let Some(handler) = ROUTER.route(uri) {
+        let response = if let Some(hande) = ROUTER.route(uri) {
             log::info!("ROUTE: {}", uri);
-            handler(uri)
+            hande(uri)
         } else {
-            handler_not_found(uri)
+            handle_not_found(uri)
         };
         stream.write(response.to_string().as_bytes()).await?;
     }
