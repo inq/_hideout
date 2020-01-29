@@ -44,6 +44,18 @@ fn handler_hello_world(uri: &str) -> http::Response {
     http::Response::new_html(200, payload)
 }
 
+fn handler_not_found(uri: &str) -> http::Response {
+    let payload = format!(
+        "{}",
+        tent::html!(
+            html
+                span.hello "404 Not Found"
+                .hello {format!("given uri: {}", uri)}
+        )
+    );
+    http::Response::new_html(404, payload)
+}
+
 lazy_static::lazy_static! {
     static ref ROUTER: Router = {
         let mut router  = Router::new();
@@ -64,14 +76,13 @@ async fn process<'a>(
     let len = stream.read(&mut buf).await?;
     if let Some(request) = http::Request::parse(&buf[..len]) {
         let uri = request.uri()?;
-        if let Some(handler) = ROUTER.route(uri) {
+        let response = if let Some(handler) = ROUTER.route(uri) {
             log::info!("ROUTE: {}", uri);
-            let response = handler(uri);
-            stream.write(response.to_string().as_bytes()).await?;
+            handler(uri)
         } else {
-            // TODO: Implement 404 error page
-            log::info!("404: {}", uri);
-        }
+            handler_not_found(uri)
+        };
+        stream.write(response.to_string().as_bytes()).await?;
     }
     stream.close().await?;
     Ok(())

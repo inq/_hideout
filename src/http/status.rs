@@ -18,6 +18,14 @@ fn reason_phrase(code: &StatusCode) -> Option<&'static str> {
         300 => "Multiple Choices",
         301 => "Moved Permanently",
         302 => "Found",
+
+        400 => "Bad Request",
+        401 => "Unauthorized",
+        402 => "Payment Required",
+        403 => "Forbidden",
+        404 => "Not Found",
+        405 => "Method Not Allowed",
+
         _ => return None,
     };
     Some(res)
