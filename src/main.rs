@@ -29,6 +29,7 @@ async fn process<'a>(
     let mut buf = [0u8; 1024];
     let len = stream.read(&mut buf).await?;
     if let Some(request) = http::Request::parse(&buf[..len]) {
+        log::info!("REQUEST: {:?}", request.request_line());
         let uri = request.uri()?;
         let response = if let Some(hande) = ROUTER.route(uri) {
             log::info!("ROUTE: {}", uri);

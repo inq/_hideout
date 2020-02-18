@@ -1,48 +1,48 @@
 use crate::http::Response;
 
 pub fn index(uri: &str) -> Response {
-    let payload = format!(
-        "{}",
+    Response::new_html(
+        200,
         tent::html!(
             html
                 body
                     span.hello "Index page"
                     .hello {format!("given uri: {}", uri)}
         )
-    );
-    Response::new_html(200, payload)
+        .to_string(),
+    )
 }
 
 pub fn hello(uri: &str) -> Response {
-    let payload = format!(
-        "{}",
+    Response::new_html(
+        200,
         tent::html!(
             html
                 body
                     span.hello "HELLO!"
                     .hello {format!("given uri: {}", uri)}
         )
-    );
-    Response::new_html(200, payload)
+        .to_string(),
+    )
 }
 
 pub fn hello_world(uri: &str) -> Response {
-    let payload = format!(
-        "{}",
+    Response::new_html(
+        200,
         tent::html!(
             html
                 body
                     span.hello "HELLO, WORLD!"
                     .hello {format!("given uri: {}", uri)}
         )
-    );
-    Response::new_html(200, payload)
+        .to_string(),
+    )
 }
 
 // TODO: Move this into separated module
 pub fn not_found(uri: &str) -> Response {
-    let payload = format!(
-        "{}",
+    Response::new_html(
+        404,
         tent::html!(
             html
                 head
@@ -53,34 +53,28 @@ pub fn not_found(uri: &str) -> Response {
                         .content "NOT FOUND"
                         .detail {format!("given uri: {}", uri)}
         )
-    );
-    Response::new_html(404, payload)
+        .to_string(),
+    )
 }
 
 pub fn stylesheet(_uri: &str) -> Response {
-    let payload = r#"
-    body {
-        font-family: sans-serif;
-    }
-    .notice {
-        width: 400px;
-        height: 300px;
-        margin: auto;
-        font-size: 2em;
-        text-align: center;
-    }
-    .notice .head {
-        font-size: 4em;
-
-    }
-    .notice .content {
-        font-size: 1em;
-        line-height: 1.5em;
-    }
-    .notice .detail {
-        font-size: 0.5em;
-        line-height: 1.5em;
-    }
-    "#;
-    Response::new_html(200, payload.to_string())
+    Response::new_html(
+        200,
+        tent::css!(
+            body
+                fontFamily: "sans-serif"
+            .notice
+                width: "400px"
+                height: "300px"
+                margin: "auto"
+                fontSize: "2em"
+                textAlign: "center"
+                .head
+                    fontSize: "4em"
+                .content
+                    fontSize: "0.5em"
+                    lineHeight: "1.5em"
+        )
+        .to_string(),
+    )
 }
