@@ -5,8 +5,7 @@ authors = ["inkyu <gofiri@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-dope = {path = "../dope"}
-
+tokio = { version = "*", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
 futures = "*"
 chrono = "*"
 color-backtrace = { version = "*", features = ["failure-bt"] }

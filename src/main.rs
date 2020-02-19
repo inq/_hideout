@@ -4,10 +4,8 @@ mod http;
 mod logger;
 mod router;
 
-use dope::executor::{self, reactor, Executor};
-use dope::net::{TcpListener, TcpStream};
-
 use router::Router;
+use tokio::net::{TcpListener, TcpStream};
 
 lazy_static::lazy_static! {
     static ref ROUTER: Router = {
@@ -20,11 +18,8 @@ lazy_static::lazy_static! {
     };
 }
 
-async fn process<'a>(
-    _reactor: reactor::Handle,
-    mut stream: TcpStream,
-) -> Result<(), failure::Error> {
-    use futures::{AsyncReadExt, AsyncWriteExt};
+async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     let mut buf = [0u8; 1024];
     let len = stream.read(&mut buf).await?;
@@ -39,32 +34,25 @@ async fn process<'a>(
         };
         stream.write(response.to_string().as_bytes()).await?;
     }
-    stream.close().await?;
     Ok(())
 }
 
-async fn main_async<'a>(executor: &executor::Handle) -> Result<(), failure::Error> {
-    let reactor = executor.reactor()?;
-    use futures::StreamExt;
+#[tokio::main]
+async fn main() -> Result<(), failure::Error> {
+    use std::net::Ipv4Addr;
+    use tokio::stream::StreamExt;
 
-    let addr = "127.0.0.1:8080";
-    let mut incoming = TcpListener::bind(reactor.clone(), addr)?.incoming();
-    log::info!("Listening on: {}", addr);
-
-    loop {
-        let stream = incoming.next().await.unwrap()?;
-        executor.spawn(process(reactor.clone(), stream))?;
-    }
-}
-
-fn main() -> Result<(), failure::Error> {
     color_backtrace::install();
     log::set_logger(&logger::Logger).unwrap();
     log::set_max_level(log::LevelFilter::Debug);
 
-    let executor = Executor::new()?;
-    let handle = executor.handle();
-    executor.block_on(main_async(&handle)).unwrap()?;
+    let addr = (Ipv4Addr::new(127, 0, 0, 1), 8080);
+    log::info!("Listening on: {:?}", addr);
+    let mut listener = TcpListener::bind(addr).await?;
 
-    Ok(())
+    let mut incoming = listener.incoming();
+    loop {
+        let stream = incoming.next().await.unwrap()?;
+        tokio::spawn(process(stream));
+    }
 }
