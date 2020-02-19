@@ -12,5 +12,5 @@ color-backtrace = { version = "*", features = ["failure-bt"] }
 failure = "*"
 log = "*"
 nom = "*"
-tent = {path = "../tent"}
+tent = "*"
 lazy_static = "*"
