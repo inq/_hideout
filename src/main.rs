@@ -3,6 +3,7 @@ mod handler;
 mod http;
 mod logger;
 mod router;
+mod util;
 
 use router::Router;
 use tokio::net::{TcpListener, TcpStream};
@@ -49,9 +50,14 @@ async fn main() -> Result<(), failure::Error> {
     use std::net::Ipv4Addr;
     use tokio::stream::StreamExt;
 
+    // Log
     color_backtrace::install();
     log::set_logger(&logger::Logger).unwrap();
     log::set_max_level(log::LevelFilter::Debug);
+
+    // Config
+    let config = util::Config::from_file(".config.yaml")?;
+    log::info!("Loaded: {:?}", config);
 
     let addr = (Ipv4Addr::new(127, 0, 0, 1), 8080);
     log::info!("Listening on: {:?}", addr);
