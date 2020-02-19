@@ -1,5 +1,17 @@
 use std::collections::HashMap;
-pub type Handler = fn(&str) -> crate::http::Response;
+
+#[derive(Clone, Copy)]
+pub enum Handler {
+    Arg0(fn() -> crate::http::Response),
+    Arg1(fn(&str) -> crate::http::Response),
+    Arg2(fn(&str, &str) -> crate::http::Response),
+}
+
+pub enum Args<'a> {
+    Arg0,
+    Arg1(&'a str),
+    Arg2(&'a str, &'a str),
+}
 
 pub struct Router {
     root: Node,
@@ -42,9 +54,10 @@ impl Router {
         self
     }
 
-    pub fn route(&self, uri: &str) -> Option<Handler> {
+    pub fn route(&self, uri: &str) -> Option<(Handler, Args)> {
         let mut current_node = &self.root;
         let mut from = 0;
+        let args = Args::Arg0; // TODO: Implement
 
         for (i, c) in uri.char_indices() {
             if c == '/' || c == '?' {
@@ -60,7 +73,7 @@ impl Router {
 
                 if c == '?' {
                     // TODO: Process query string
-                    return current_node.handler;
+                    return current_node.handler.map(|handler| (handler, args));
                 }
                 from = i + 1;
             }
@@ -75,5 +88,6 @@ impl Router {
                 .get(&uri[from..])
                 .and_then(|child| child.handler)
         }
+        .map(|handler| (handler, args))
     }
 }

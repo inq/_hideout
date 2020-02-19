@@ -1,39 +1,36 @@
 use crate::http::Response;
 
-pub fn index(uri: &str) -> Response {
+pub fn index() -> Response {
     Response::new_html(
         200,
         tent::html!(
             html
                 body
                     span.hello "Index page"
-                    .hello {format!("given uri: {}", uri)}
         )
         .to_string(),
     )
 }
 
-pub fn hello(uri: &str) -> Response {
+pub fn hello() -> Response {
     Response::new_html(
         200,
         tent::html!(
             html
                 body
-                    span.hello "HELLO!"
-                    .hello {format!("given uri: {}", uri)}
+                    span.hello "/hello"
         )
         .to_string(),
     )
 }
 
-pub fn hello_world(uri: &str) -> Response {
+pub fn hello_world() -> Response {
     Response::new_html(
         200,
         tent::html!(
             html
                 body
                     span.hello "HELLO, WORLD!"
-                    .hello {format!("given uri: {}", uri)}
         )
         .to_string(),
     )
@@ -57,7 +54,7 @@ pub fn not_found(uri: &str) -> Response {
     )
 }
 
-pub fn stylesheet(_uri: &str) -> Response {
+pub fn stylesheet() -> Response {
     Response::new_html(
         200,
         tent::css!(

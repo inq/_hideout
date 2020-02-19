@@ -9,11 +9,13 @@ use tokio::net::{TcpListener, TcpStream};
 
 lazy_static::lazy_static! {
     static ref ROUTER: Router = {
+        use router::Handler;
+
         let mut router  = Router::new();
-        router.add_path("/hello/world", handler::hello_world);
-        router.add_path("/hello", handler::hello);
-        router.add_path("/", handler::index);
-        router.add_path("/main.css", handler::stylesheet);
+        router.add_path("/hello/world", Handler::Arg0(handler::hello_world));
+        router.add_path("/hello", Handler::Arg0(handler::hello));
+        router.add_path("/", Handler::Arg0(handler::index));
+        router.add_path("/main.css", Handler::Arg0(handler::stylesheet));
         router
     };
 }
@@ -26,9 +28,14 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
     if let Some(request) = http::Request::parse(&buf[..len]) {
         log::info!("REQUEST: {:?}", request.request_line());
         let uri = request.uri()?;
-        let response = if let Some(hande) = ROUTER.route(uri) {
+        let response = if let Some((handler, args)) = ROUTER.route(uri) {
+            use router::Handler;
+
             log::info!("ROUTE: {}", uri);
-            hande(uri)
+            match handler {
+                Handler::Arg0(func) => func(),
+                _ => panic!(),
+            }
         } else {
             handler::not_found(uri)
         };
