@@ -57,7 +57,22 @@ async fn main() -> Result<(), failure::Error> {
 
     // Config
     let config = util::Config::from_file(".config.yaml")?;
-    log::info!("Loaded: {:?}", config);
+
+    // Database
+    let (client, connection) =
+        tokio_postgres::connect(&config.database_string(), tokio_postgres::NoTls).await?;
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+
+    let rows = client.query("SELECT * from articles", &[]).await?;
+    for row in rows {
+        let data: &str = row.get(1);
+        log::info!("{:?}", data);
+    }
 
     let addr = (Ipv4Addr::new(127, 0, 0, 1), 8080);
     log::info!("Listening on: {:?}", addr);

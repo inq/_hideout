@@ -16,4 +16,4 @@ serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
 tent = "*"
 tokio = { version = "*", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
-
+tokio-postgres = "*"

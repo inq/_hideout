@@ -1,3 +1,5 @@
 database:
-    username: hideout
+    host: localhost
+    user: hideout
     password: escape
+    dbname: hideout_development

@@ -8,8 +8,10 @@ pub struct Config {
 
 #[derive(Deserialize, Debug)]
 pub struct Database {
-    username: String,
+    host: String,
+    user: String,
     password: String,
+    dbname: String,
 }
 
 impl Config {
@@ -22,5 +24,13 @@ impl Config {
 
         let res = serde_yaml::from_str(&contents)?;
         Ok(res)
+    }
+
+    pub fn database_string(&self) -> String {
+        // TODO: Implement host
+        format!(
+            "host={} user={} password='{}' dbname={}",
+            self.database.host, self.database.user, self.database.password, self.database.dbname
+        )
     }
 }
