@@ -20,11 +20,18 @@ async fn main() -> Result<(), failure::Error> {
         }
     });
 
-    // TODO: Implement me
-    let rows = client.query("SELECT * from articles", &[]).await?;
-    for row in rows {
-        let data: &str = row.get(1);
-        log::info!("{:?}", data);
+    let res = client
+        .query(
+            r#"
+        CREATE TABLE articles (
+            id INTEGER PRIMARY KEY,
+            content TEXT
+        )"#,
+            &[],
+        )
+        .await;
+    if let Err(err) = res {
+        panic!("Table creation erorr: {}", err.code().unwrap().code());
     }
     Ok(())
 }
