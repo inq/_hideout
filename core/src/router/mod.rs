@@ -13,6 +13,7 @@ pub enum Args<'a> {
     Arg2(&'a str, &'a str),
 }
 
+#[derive(Default)]
 pub struct Router {
     root: Node,
 }
@@ -26,9 +27,7 @@ pub struct Node {
 
 impl Router {
     pub fn new() -> Self {
-        Self {
-            root: Node::default(),
-        }
+        Self::default()
     }
 
     pub fn add_path(&mut self, path: &str, handler: Handler) -> &mut Self {

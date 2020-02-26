@@ -1,19 +1,7 @@
-[package]
-name = "hideout"
-version = "0.1.0"
-authors = ["inkyu <gofiri@gmail.com>"]
-edition = "2018"
+[workspace]
 
-[dependencies]
-chrono = "*"
-color-backtrace = { version = "*", features = ["failure-bt"] }
-failure = "*"
-futures = "*"
-lazy_static = "*"
-log = "*"
-nom = "*"
-serde = { version = "*", features = ["derive"] }
-serde_yaml = "*"
-tent = "*"
-tokio = { version = "*", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
-tokio-postgres = "*"
+members = [
+  "core",
+  "frontend",
+  "bootstrap",
+]

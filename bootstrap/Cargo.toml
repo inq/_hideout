@@ -1,0 +1,13 @@
+[package]
+name = "bootstrap"
+version = "0.1.0"
+authors = ["inkyu <gofiri@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+color-backtrace = { version = "*", features = ["failure-bt"] }
+failure = "*"
+core = { path = "../core" }
+log = "*"
+tokio = { version = "*", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
+tokio-postgres = "*"

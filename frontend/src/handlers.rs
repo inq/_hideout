@@ -1,4 +1,4 @@
-use crate::http::Response;
+use core::http::Response;
 
 pub fn index() -> Response {
     Response::new_html(
@@ -6,31 +6,31 @@ pub fn index() -> Response {
         tent::html!(
             html
                 body
-                    span.hello "Index page"
+                    span.label "Index page"
         )
         .to_string(),
     )
 }
 
-pub fn hello() -> Response {
+pub fn article_show(article_id: &str) -> Response {
     Response::new_html(
         200,
         tent::html!(
             html
                 body
-                    span.hello "/hello"
+                    span.label {format!("Show Article: {}", article_id)}
         )
         .to_string(),
     )
 }
 
-pub fn hello_world() -> Response {
+pub fn article_list() -> Response {
     Response::new_html(
         200,
         tent::html!(
             html
                 body
-                    span.hello "HELLO, WORLD!"
+                    span.label "List of articles"
         )
         .to_string(),
     )
