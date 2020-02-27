@@ -1,4 +1,7 @@
+mod debug;
+
 use std::collections::HashMap;
+
 
 #[derive(Clone, Copy)]
 pub enum Handler {
@@ -21,6 +24,7 @@ pub struct Router {
 #[derive(Default)]
 pub struct Node {
     children: HashMap<String, Node>,
+    variable: Option<Box<Node>>,
     handler: Option<Handler>,
     url: Option<String>,
 }
@@ -38,13 +42,24 @@ impl Router {
         assert!(elems.next().unwrap().is_empty());
         if path.len() > 1 {
             for elem in elems {
-                if current_node.children.contains_key(elem) {
-                    current_node = current_node.children.get_mut(elem).unwrap();
+                if elem.starts_with(':') {
+                    // Variable
+                    if current_node.variable.is_some() {
+                        current_node = current_node.variable.as_mut().unwrap();
+                    } else {
+                        current_node.variable = Some(Default::default());
+                        current_node = current_node.variable.as_mut().unwrap();
+                    }
                 } else {
-                    current_node
-                        .children
-                        .insert(elem.to_string(), Node::default());
-                    current_node = current_node.children.get_mut(elem).unwrap();
+                    // Constant
+                    if current_node.children.contains_key(elem) {
+                        current_node = current_node.children.get_mut(elem).unwrap();
+                    } else {
+                        current_node
+                            .children
+                            .insert(elem.to_string(), Node::default());
+                        current_node = current_node.children.get_mut(elem).unwrap();
+                    }
                 }
             }
         }
@@ -88,5 +103,31 @@ impl Router {
                 .and_then(|child| child.handler)
         }
         .map(|handler| (handler, args))
+    }
+
+    pub fn to_debug(&self) -> debug::Router {
+        debug::Router {
+            root: self.root.to_debug("/", 0)
+        }
+    }
+}
+
+impl Node {
+    fn to_debug(&self, label: &str, indent: usize) -> debug::Node {
+        let mut children: Vec<debug::Node> = self
+            .children
+            .iter()
+            .map(|(key, node)| node.to_debug(key, indent + 1))
+            .collect();
+        if let Some(variable) = self.variable.as_ref() {
+            children.push(variable.to_debug(":VAR", indent + 1));
+        };
+
+        debug::Node {
+            indent,
+            label: label.to_string(),
+            children,
+            is_leaf: self.url.is_some(),
+        }
     }
 }

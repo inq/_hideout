@@ -14,7 +14,7 @@ lazy_static::lazy_static! {
 
         let mut router  = Router::new();
         router.add_path("/articles/:article_id", Handler::Arg1(handlers::article_show));
-        router.add_path("/articles", Handler::Arg0(handlers::article_list));
+        router.add_path("/articles/list", Handler::Arg0(handlers::article_list));
         router.add_path("/", Handler::Arg0(handlers::index));
         router.add_path("/main.css", Handler::Arg0(handlers::stylesheet));
         router
@@ -49,6 +49,8 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
 async fn main() -> Result<(), failure::Error> {
     use std::net::Ipv4Addr;
     use tokio::stream::StreamExt;
+
+    println!("{}", (*ROUTER).to_debug());
 
     // Log
     color_backtrace::install();
