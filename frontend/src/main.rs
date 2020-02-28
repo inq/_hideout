@@ -29,12 +29,14 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
     if let Some(request) = core::http::Request::parse(&buf[..len]) {
         log::info!("REQUEST: {:?}", request.request_line());
         let uri = request.uri()?;
-        let response = if let Some((handler, _args)) = ROUTER.route(uri) {
-            use router::Handler;
+        let response = if let Some((handler, args)) = ROUTER.route(uri) {
+            use router::{Args, Handler};
 
             log::info!("ROUTE: {}", uri);
-            match handler {
-                Handler::Arg0(func) => func(),
+            match (handler, args) {
+                (Handler::Arg0(func), Args::Arg0) => func(),
+                (Handler::Arg1(func), Args::Arg1(arg0)) => func(arg0),
+                (Handler::Arg2(func), Args::Arg2(arg0, arg1)) => func(arg0, arg1),
                 _ => panic!(),
             }
         } else {

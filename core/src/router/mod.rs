@@ -2,7 +2,6 @@ mod debug;
 
 use std::collections::HashMap;
 
-
 #[derive(Clone, Copy)]
 pub enum Handler {
     Arg0(fn() -> crate::http::Response),
@@ -10,10 +9,23 @@ pub enum Handler {
     Arg2(fn(&str, &str) -> crate::http::Response),
 }
 
+#[derive(Debug)]
 pub enum Args<'a> {
     Arg0,
     Arg1(&'a str),
     Arg2(&'a str, &'a str),
+    Arg3(&'a str, &'a str, &'a str),
+}
+
+impl<'a> Args<'a> {
+    pub fn push(&mut self, data: &'a str) {
+        *self = match self {
+            Args::Arg0 => Args::Arg1(data),
+            Args::Arg1(a1) => Args::Arg2(a1, data),
+            Args::Arg2(a1, a2) => Args::Arg3(a1, a2, data),
+            _ => unimplemented!(),
+        };
+    }
 }
 
 #[derive(Default)]
@@ -68,10 +80,10 @@ impl Router {
         self
     }
 
-    pub fn route(&self, uri: &str) -> Option<(Handler, Args)> {
+    pub fn route<'a>(&self, uri: &'a str) -> Option<(Handler, Args<'a>)> {
         let mut current_node = &self.root;
         let mut from = 0;
-        let args = Args::Arg0; // TODO: Implement
+        let mut args = Args::Arg0; // TODO: Implement
 
         for (i, c) in uri.char_indices() {
             if c == '/' || c == '?' {
@@ -79,6 +91,9 @@ impl Router {
                     let elem = &uri[from..i];
                     if current_node.children.contains_key(elem) {
                         current_node = current_node.children.get(elem).unwrap();
+                    } else if current_node.variable.is_some() {
+                        args.push(elem);
+                        current_node = current_node.variable.as_ref().unwrap();
                     } else {
                         log::warn!("Route error: {}({})", uri, elem);
                         return None;
@@ -97,17 +112,24 @@ impl Router {
             // Ends with '/'
             current_node.handler
         } else {
-            current_node
-                .children
-                .get(&uri[from..])
-                .and_then(|child| child.handler)
+            let elem = &uri[from..];
+            if current_node.children.contains_key(elem) {
+                current_node.children.get(elem).unwrap()
+            } else if current_node.variable.is_some() {
+                args.push(elem);
+                current_node.variable.as_ref().unwrap()
+            } else {
+                log::warn!("Route error: {}({})", uri, elem);
+                return None;
+            }
+            .handler
         }
         .map(|handler| (handler, args))
     }
 
     pub fn to_debug(&self) -> debug::Router {
         debug::Router {
-            root: self.root.to_debug("/", 0)
+            root: self.root.to_debug("/", 0),
         }
     }
 }
