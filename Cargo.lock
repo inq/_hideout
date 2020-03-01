@@ -122,6 +122,9 @@ dependencies = [
  "core",
  "failure",
  "log",
+ "serde",
+ "serde_yaml",
+ "sha2",
  "tokio",
  "tokio-postgres",
 ]

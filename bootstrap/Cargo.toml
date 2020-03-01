@@ -9,5 +9,8 @@ color-backtrace = { version = "*", features = ["failure-bt"] }
 failure = "*"
 core = { path = "../core" }
 log = "*"
+serde = "*"
+serde_yaml = "*"
+sha2 = "*"
 tokio = { version = "*", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
 tokio-postgres = "*"

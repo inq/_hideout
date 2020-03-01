@@ -1,4 +1,26 @@
+mod fixture;
+
 use core::{Config, Logger};
+use std::fmt;
+
+fn parse_fixture() -> Result<fixture::Fixture, failure::Error> {
+    use std::fs::File;
+
+    let reader = File::open(".fixture.yaml")?;
+    let res = serde_yaml::from_reader(reader)?;
+    Ok(res)
+}
+
+struct HexBytes<'a>(&'a [u8]);
+
+impl<'a> fmt::Display for HexBytes<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for byte in self.0 {
+            write!(f, "{:02x}", byte)?;
+        }
+        Ok(())
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<(), failure::Error> {
@@ -20,18 +42,52 @@ async fn main() -> Result<(), failure::Error> {
         }
     });
 
-    let res = client
+    let fixture = parse_fixture()?;
+    println!("{:?}", fixture);
+
+    let _res = client
         .query(
             r#"
         CREATE TABLE articles (
-            id INTEGER PRIMARY KEY,
-            content TEXT
+            id UUID DEFAULT uuid_generate_v4(),
+            content TEXT NOT NULL,
+            PRIMARY KEY (id)
         )"#,
             &[],
         )
         .await;
-    if let Err(err) = res {
-        panic!("Table creation erorr: {}", err.code().unwrap().code());
+
+    let _res = client
+        .query(
+            r#"
+        CREATE TABLE users (
+            id UUID DEFAULT uuid_generate_v4(),
+            email VARCHAR(255) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            password_hashed VARCHAR(255) NOT NULL,
+            PRIMARY KEY (id)
+        )"#,
+            &[],
+        )
+        .await;
+
+    for user in fixture.users.iter() {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.input(&user.password);
+        let result = hasher.result();
+        let password_hashed = HexBytes(&result).to_string();
+
+        let _res = client
+            .query(
+                r#"
+            INSERT INTO users (email, name, password_hashed)
+            VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR)
+        "#,
+                &[&user.email, &user.name, &password_hashed],
+            )
+            .await?;
     }
+
     Ok(())
 }
