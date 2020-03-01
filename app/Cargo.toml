@@ -1,5 +1,5 @@
 [package]
-name = "frontend"
+name = "app"
 version = "0.1.0"
 authors = ["inkyu <gofiri@gmail.com>"]
 edition = "2018"
