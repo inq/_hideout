@@ -5,6 +5,7 @@ use core::{
 };
 
 mod handlers;
+mod models;
 
 use tokio::net::{TcpListener, TcpStream};
 
