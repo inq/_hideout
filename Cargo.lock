@@ -1035,18 +1035,18 @@ dependencies = [
 
 [[package]]
 name = "tent"
-version = "0.0.6"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "560c52b95146a6108cf68db5dd6a4eaebca86c43543fd6e6aea36a84c2c5d647"
+checksum = "360e881677d7aa80eb932f225ecd67a01c6cc961bb150e4036af9799244b00d4"
 dependencies = [
  "tent_codegen",
 ]
 
 [[package]]
 name = "tent_codegen"
-version = "0.0.6"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3de64fbeba0ac9a11b6d68caeb1760819da3619afa6c2667f18a60433b05e9d3"
+checksum = "c051692804424e37a74eabf14f7f5a7212bafe39336c0ca31e0c52fd65443a04"
 dependencies = [
  "proc-macro2",
  "quote",

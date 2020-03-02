@@ -6,4 +6,4 @@ mod util;
 
 pub use logger::Logger;
 pub use router::Router;
-pub use util::Config;
+pub use util::{AssetStore, Config};

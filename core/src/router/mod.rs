@@ -1,9 +1,11 @@
 mod debug;
 
+use crate::util::AssetStore;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
 pub enum Handler {
+    Resource(usize),
     Arg0(fn() -> crate::http::Response),
     Arg1(fn(&str) -> crate::http::Response),
     Arg2(fn(&str, &str) -> crate::http::Response),
@@ -31,6 +33,7 @@ impl<'a> Args<'a> {
 #[derive(Default)]
 pub struct Router {
     root: Node,
+    pub asset_store: AssetStore,
 }
 
 #[derive(Default)]
@@ -42,8 +45,11 @@ pub struct Node {
 }
 
 impl Router {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(asset_store: AssetStore) -> Self {
+        Self {
+            root: Node::default(),
+            asset_store,
+        }
     }
 
     pub fn add_path(&mut self, path: &str, handler: Handler) -> &mut Self {

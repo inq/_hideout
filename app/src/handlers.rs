@@ -3,7 +3,7 @@ use core::http::Response;
 pub fn index() -> Response {
     Response::new_html(
         200,
-        tent::html!(
+        &tent::html!(
             html
                 head
                     meta charset="utf-8"
@@ -30,7 +30,7 @@ pub fn index() -> Response {
 pub fn article_show(article_id: &str) -> Response {
     Response::new_html(
         200,
-        tent::html!(
+        &tent::html!(
             html
                 body
                     span.label {format!("Show Article: {}", article_id)}
@@ -42,7 +42,7 @@ pub fn article_show(article_id: &str) -> Response {
 pub fn article_list() -> Response {
     Response::new_html(
         200,
-        tent::html!(
+        &tent::html!(
             html
                 body
                     span.label "List of articles"
@@ -55,7 +55,7 @@ pub fn article_list() -> Response {
 pub fn not_found(uri: &str) -> Response {
     Response::new_html(
         404,
-        tent::html!(
+        &tent::html!(
             html
                 head
                     link rel="stylesheet" href="/main.css"
@@ -72,9 +72,13 @@ pub fn not_found(uri: &str) -> Response {
 pub fn stylesheet() -> Response {
     Response::new_html(
         200,
-        tent::css!(
+        &tent::css!(
+            @fontFace
+                fontFamily: "Raleway"
+                src: "url('/assets/raleway-light.woff') format('woff')"
+
             body
-                fontFamily: "sans-serif"
+                fontFamily: "Raleway"
                 maxWidth: "800px"
                 margin: "20 auto"
             .mainHeader

@@ -1,7 +1,7 @@
 #![feature(proc_macro_hygiene)]
 use core::{
     router::{self, Router},
-    Logger,
+    AssetStore, Logger,
 };
 
 mod handlers;
@@ -13,7 +13,11 @@ lazy_static::lazy_static! {
     static ref ROUTER: Router = {
         use router::Handler;
 
-        let mut router  = Router::new();
+        let mut asset_store = AssetStore::new();
+        let asset0 = asset_store.add("assets/raleway-light.woff", "font/woff").unwrap();
+
+        let mut router  = Router::new(asset_store);
+        router.add_path("/assets/raleway-light.woff", Handler::Resource(asset0));
         router.add_path("/articles/:article_id", Handler::Arg1(handlers::article_show));
         router.add_path("/articles/list", Handler::Arg0(handlers::article_list));
         router.add_path("/", Handler::Arg0(handlers::index));
@@ -35,6 +39,7 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
 
             log::info!("ROUTE: {}", uri);
             match (handler, args) {
+                (Handler::Resource(id), Args::Arg0) => ROUTER.asset_store.serve(id),
                 (Handler::Arg0(func), Args::Arg0) => func(),
                 (Handler::Arg1(func), Args::Arg1(arg0)) => func(arg0),
                 (Handler::Arg2(func), Args::Arg2(arg0, arg1)) => func(arg0, arg1),
@@ -43,7 +48,8 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
         } else {
             handlers::not_found(uri)
         };
-        stream.write(response.to_string().as_bytes()).await?;
+        stream.write(response.header.to_string().as_bytes()).await?;
+        stream.write(&response.payload).await?;
     }
     Ok(())
 }
@@ -53,14 +59,13 @@ async fn main() -> Result<(), failure::Error> {
     use std::net::Ipv4Addr;
     use tokio::stream::StreamExt;
 
-    println!("{}", (*ROUTER).to_debug());
-
     // Log
     color_backtrace::install();
     log::set_logger(&Logger).unwrap();
     log::set_max_level(log::LevelFilter::Debug);
 
     // Config
+    log::info!("\n{}", (*ROUTER).to_debug());
     let config = core::Config::from_file(".config.yaml")?;
 
     // Database
