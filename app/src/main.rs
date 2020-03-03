@@ -20,6 +20,7 @@ lazy_static::lazy_static! {
         router.add_path("/assets/raleway-light.woff", Handler::Resource(asset0));
         router.add_path("/articles/:article_id", Handler::Arg1(handlers::article_show));
         router.add_path("/articles/list", Handler::Arg0(handlers::article_list));
+        router.add_path("/session/new", Handler::Arg0(handlers::session_new));
         router.add_path("/", Handler::Arg0(handlers::index));
         router.add_path("/main.css", Handler::Arg0(handlers::stylesheet));
         router
