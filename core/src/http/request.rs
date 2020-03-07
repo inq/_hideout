@@ -7,7 +7,7 @@ use nom::IResult;
 
 use std::fmt::{self, Debug};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Method {
     Options,
     Get,
@@ -171,6 +171,10 @@ impl<'a> Request<'a> {
 
     pub fn request_line(&self) -> &RequestLine {
         &self.request_line
+    }
+
+    pub fn method(&self) -> Method {
+        self.request_line.method
     }
 
     pub fn uri(&self) -> Result<&str, std::str::Utf8Error> {

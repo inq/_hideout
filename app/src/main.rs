@@ -17,12 +17,13 @@ lazy_static::lazy_static! {
         let asset0 = asset_store.add("assets/raleway-light.woff", "font/woff").unwrap();
 
         let mut router  = Router::new(asset_store);
-        router.add_path("/assets/raleway-light.woff", Handler::Resource(asset0));
-        router.add_path("/articles/:article_id", Handler::Arg1(handlers::article_show));
-        router.add_path("/articles/list", Handler::Arg0(handlers::article_list));
-        router.add_path("/session/new", Handler::Arg0(handlers::session_new));
-        router.add_path("/", Handler::Arg0(handlers::index));
-        router.add_path("/main.css", Handler::Arg0(handlers::stylesheet));
+        router.add_get("/assets/raleway-light.woff", Handler::Resource(asset0));
+        router.add_get("/articles/:article_id", Handler::Arg1(handlers::article_show));
+        router.add_get("/articles/list", Handler::Arg0(handlers::article_list));
+        router.add_get("/session/new", Handler::Arg0(handlers::session_new));
+        router.add_post("/session/create", Handler::Arg0(handlers::session_create));
+        router.add_get("/", Handler::Arg0(handlers::index));
+        router.add_get("/main.css", Handler::Arg0(handlers::stylesheet));
         router
     };
 }
@@ -35,7 +36,7 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
     if let Some(request) = core::http::Request::parse(&buf[..len]) {
         log::info!("REQUEST: {:?}", request.request_line());
         let uri = request.uri()?;
-        let response = if let Some((handler, args)) = ROUTER.route(uri) {
+        let response = if let Some((handler, args)) = ROUTER.route(request.method(), uri) {
             use router::{Args, Handler};
 
             log::info!("ROUTE: {}", uri);

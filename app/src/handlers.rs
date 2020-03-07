@@ -74,6 +74,18 @@ pub fn session_new() -> Response {
     )
 }
 
+pub fn session_create() -> Response {
+    Response::new_html(
+        200,
+        &tent::html!(
+            html
+                body
+                    "Session created"
+        )
+        .to_string(),
+    )
+}
+
 pub fn article_show(article_id: &str) -> Response {
     Response::new_html(
         200,

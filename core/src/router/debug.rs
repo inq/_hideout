@@ -1,12 +1,18 @@
+use crate::http::Method;
+use std::collections::HashMap;
 use std::fmt::{self, Formatter};
 
 pub struct Router {
-    pub(super) root: Node,
+    pub(super) inner: HashMap<Method, Node>,
 }
 
 impl fmt::Display for Router {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "Router {{\n{:?}}}", self.root)
+        writeln!(f, "Router {{")?;
+        for (method, node) in self.inner.iter() {
+            write!(f, "{:?}\n{:?}", method, node)?;
+        }
+        write!(f, "}}")
     }
 }
 pub struct Node {

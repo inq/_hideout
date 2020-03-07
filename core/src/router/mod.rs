@@ -1,5 +1,6 @@
 mod debug;
 
+use crate::http::Method;
 use crate::util::AssetStore;
 use std::collections::HashMap;
 
@@ -32,7 +33,7 @@ impl<'a> Args<'a> {
 
 #[derive(Default)]
 pub struct Router {
-    root: Node,
+    inner: HashMap<crate::http::Method, Node>,
     pub asset_store: AssetStore,
 }
 
@@ -47,13 +48,21 @@ pub struct Node {
 impl Router {
     pub fn new(asset_store: AssetStore) -> Self {
         Self {
-            root: Node::default(),
+            inner: Default::default(),
             asset_store,
         }
     }
 
-    pub fn add_path(&mut self, path: &str, handler: Handler) -> &mut Self {
-        let mut current_node = &mut self.root;
+    pub fn add_get(&mut self, path: &str, handler: Handler) -> &mut Self {
+        self.add_path(Method::Get, path, handler)
+    }
+
+    pub fn add_post(&mut self, path: &str, handler: Handler) -> &mut Self {
+        self.add_path(Method::Post, path, handler)
+    }
+
+    pub fn add_path(&mut self, method: Method, path: &str, handler: Handler) -> &mut Self {
+        let mut current_node = self.inner.entry(method).or_insert(Node::default());
         let mut elems = path.split('/');
 
         // Path should start with '/'
@@ -86,8 +95,8 @@ impl Router {
         self
     }
 
-    pub fn route<'a>(&self, uri: &'a str) -> Option<(Handler, Args<'a>)> {
-        let mut current_node = &self.root;
+    pub fn route<'a>(&self, method: Method, uri: &'a str) -> Option<(Handler, Args<'a>)> {
+        let mut current_node = self.inner.get(&method)?;
         let mut from = 0;
         let mut args = Args::Arg0; // TODO: Implement
 
@@ -135,7 +144,11 @@ impl Router {
 
     pub fn to_debug(&self) -> debug::Router {
         debug::Router {
-            root: self.root.to_debug("/", 0),
+            inner: self
+                .inner
+                .iter()
+                .map(|(method, root)| (*method, root.to_debug("/", 0)))
+                .collect(),
         }
     }
 }
