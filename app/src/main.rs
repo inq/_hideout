@@ -1,5 +1,6 @@
 #![feature(proc_macro_hygiene)]
 use core::{
+    http::{Request, Response},
     router::{self, Router},
     AssetStore, Logger,
 };
@@ -28,27 +29,53 @@ lazy_static::lazy_static! {
     };
 }
 
+const HEADER_SIZE: usize = 2048;
+
+fn handle_request(request: Request, payload: &[u8]) -> Result<Response, failure::Error> {
+    log::info!(
+        "REQUEST: {:?} ({})",
+        request.request_line(),
+        std::str::from_utf8(payload)?
+    );
+    let uri = request.uri()?;
+    let res = if let Some((handler, args)) = ROUTER.route(request.method(), uri) {
+        use router::{Args, Handler};
+
+        match (handler, args) {
+            (Handler::Resource(id), Args::Arg0) => ROUTER.asset_store.serve(id),
+            (Handler::Arg0(func), Args::Arg0) => func(payload),
+            (Handler::Arg1(func), Args::Arg1(arg0)) => func(payload, arg0),
+            (Handler::Arg2(func), Args::Arg2(arg0, arg1)) => func(payload, arg0, arg1),
+            _ => panic!(),
+        }
+    } else {
+        handlers::not_found(uri)
+    };
+    Ok(res)
+}
+
 async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-    let mut buf = [0u8; 1024];
+    let mut buf = [0u8; HEADER_SIZE];
     let len = stream.read(&mut buf).await?;
     if let Some(request) = core::http::Request::parse(&buf[..len]) {
-        log::info!("REQUEST: {:?}", request.request_line());
-        let uri = request.uri()?;
-        let response = if let Some((handler, args)) = ROUTER.route(request.method(), uri) {
-            use router::{Args, Handler};
-
-            match (handler, args) {
-                (Handler::Resource(id), Args::Arg0) => ROUTER.asset_store.serve(id),
-                (Handler::Arg0(func), Args::Arg0) => func(),
-                (Handler::Arg1(func), Args::Arg1(arg0)) => func(arg0),
-                (Handler::Arg2(func), Args::Arg2(arg0, arg1)) => func(arg0, arg1),
-                _ => panic!(),
-            }
+        let payload = if let Some(content_length) = request.content_length() {
+            let mut payload = Vec::with_capacity(content_length);
+            payload.extend_from_slice(request.body);
+            let offset = payload.len();
+            log::info!("Reading content: Content-Length: {}", content_length);
+            let len = (&mut stream)
+                .take((content_length - offset) as u64)
+                .read_to_end(&mut payload)
+                .await?;
+            assert!(len == content_length);
+            payload
         } else {
-            handlers::not_found(uri)
+            vec![]
         };
+
+        let response = handle_request(request, &payload)?;
         stream.write(response.header.to_string().as_bytes()).await?;
         stream.write(&response.payload).await?;
     }

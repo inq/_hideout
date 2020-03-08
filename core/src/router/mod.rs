@@ -7,9 +7,10 @@ use std::collections::HashMap;
 #[derive(Clone, Copy)]
 pub enum Handler {
     Resource(usize),
-    Arg0(fn() -> crate::http::Response),
-    Arg1(fn(&str) -> crate::http::Response),
-    Arg2(fn(&str, &str) -> crate::http::Response),
+    // TODO: Pass request object
+    Arg0(fn(&[u8]) -> crate::http::Response),
+    Arg1(fn(&[u8], &str) -> crate::http::Response),
+    Arg2(fn(&[u8], &str, &str) -> crate::http::Response),
 }
 
 #[derive(Debug)]

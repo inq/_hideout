@@ -35,7 +35,7 @@ fn render_with_layout(inner: &str) -> String {
     .to_string()
 }
 
-pub fn index() -> Response {
+pub fn index(_payload: &[u8]) -> Response {
     let content = r#"
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
         incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
@@ -59,7 +59,7 @@ pub fn index() -> Response {
     )
 }
 
-pub fn session_new() -> Response {
+pub fn session_new(_payload: &[u8]) -> Response {
     Response::new_html(
         200,
         &render_with_layout(
@@ -84,20 +84,23 @@ pub fn session_new() -> Response {
     )
 }
 
-pub fn session_create() -> Response {
+pub fn session_create(payload: &[u8]) -> Response {
+    use core::http::FormData;
+    let form_data = FormData::parse_x_www_form_urlencoded(payload);
+
     Response::new_html(
         200,
         &render_with_layout(
             &tent::html!(
                 article
-                    "Session created"
+                    {format!("{:?}", form_data)}
             )
             .to_string(),
         ),
     )
 }
 
-pub fn article_show(article_id: &str) -> Response {
+pub fn article_show(_payload: &[u8], article_id: &str) -> Response {
     Response::new_html(
         200,
         &render_with_layout(
@@ -110,7 +113,7 @@ pub fn article_show(article_id: &str) -> Response {
     )
 }
 
-pub fn article_list() -> Response {
+pub fn article_list(_payload: &[u8]) -> Response {
     Response::new_html(
         200,
         &render_with_layout(
@@ -141,7 +144,7 @@ pub fn not_found(uri: &str) -> Response {
     )
 }
 
-pub fn stylesheet() -> Response {
+pub fn stylesheet(_payload: &[u8]) -> Response {
     Response::new_html(
         200,
         &tent::css!(

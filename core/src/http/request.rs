@@ -118,7 +118,7 @@ fn request_line<'a>(input: &'a [u8]) -> IResult<&'a [u8], RequestLine<'a>> {
 pub struct Request<'a> {
     request_line: RequestLine<'a>,
     headers: Vec<Header<'a>>,
-    body: &'a [u8],
+    pub body: &'a [u8],
 }
 
 pub struct Header<'a> {
@@ -167,6 +167,17 @@ impl<'a> Request<'a> {
             Ok((_, output)) => Some(output),
             _ => None,
         }
+    }
+
+    pub fn content_length(&self) -> Option<usize> {
+        for header in self.headers.iter() {
+            if header.name == b"Content-Length" {
+                return std::str::from_utf8(header.value)
+                    .ok()
+                    .and_then(|s| s.parse().ok());
+            }
+        }
+        return None;
     }
 
     pub fn request_line(&self) -> &RequestLine {
