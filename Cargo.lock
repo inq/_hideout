@@ -184,9 +184,9 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "chrono"
-version = "0.4.10"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31850b4a4d6bae316f7a09e691c944c28299298837edc0a03f755618c23cbc01"
+checksum = "80094f509cf8b5ae86a4966a39b3ff66cd7e2a3e594accec3743ff3fabeab5b2"
 dependencies = [
  "num-integer",
  "num-traits",
@@ -1035,18 +1035,18 @@ dependencies = [
 
 [[package]]
 name = "tent"
-version = "0.0.8"
+version = "0.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcd3ba0bd55e40a084760e067a9c64d1abf8eaa36f63a9d75ff9ae26152a7592"
+checksum = "478a803b5ddae9f511469fbe23022d3f6f841cfdd714f4f612260aa0b764de91"
 dependencies = [
  "tent_codegen",
 ]
 
 [[package]]
 name = "tent_codegen"
-version = "0.0.8"
+version = "0.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9568bc21100d131a7dcd3aa3629d6e5ed2d2a6f4b02b5d148c946598edd03ec"
+checksum = "65c13c3363c5661805a9b046faec350957d6f37ef6c5774f957b7382c8362e19"
 dependencies = [
  "proc-macro2",
  "quote",
