@@ -39,7 +39,6 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
         let response = if let Some((handler, args)) = ROUTER.route(request.method(), uri) {
             use router::{Args, Handler};
 
-            log::info!("ROUTE: {}", uri);
             match (handler, args) {
                 (Handler::Resource(id), Args::Arg0) => ROUTER.asset_store.serve(id),
                 (Handler::Arg0(func), Args::Arg0) => func(),
