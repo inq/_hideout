@@ -1,12 +1,8 @@
-#![feature(proc_macro_hygiene)]
 use core::{
     http::{Request, Response},
     router::{self, Router},
     AssetStore, Logger,
 };
-
-mod handlers;
-mod models;
 
 use tokio::net::{TcpListener, TcpStream};
 
@@ -19,12 +15,12 @@ lazy_static::lazy_static! {
 
         let mut router  = Router::new(asset_store);
         router.add_get("/assets/raleway-light.woff", Handler::Resource(asset0));
-        router.add_get("/articles/:article_id", Handler::Arg1(handlers::article_show));
-        router.add_get("/articles/list", Handler::Arg0(handlers::article_list));
-        router.add_get("/session/new", Handler::Arg0(handlers::session_new));
-        router.add_post("/session/create", Handler::Arg0(handlers::session_create));
-        router.add_get("/", Handler::Arg0(handlers::index));
-        router.add_get("/main.css", Handler::Arg0(handlers::stylesheet));
+        router.add_get("/articles/:article_id", Handler::Arg1(app::handlers::article_show));
+        router.add_get("/articles/list", Handler::Arg0(app::handlers::article_list));
+        router.add_get("/session/new", Handler::Arg0(app::handlers::session_new));
+        router.add_post("/session/create", Handler::Arg0(app::handlers::session_create));
+        router.add_get("/", Handler::Arg0(app::handlers::index));
+        router.add_get("/main.css", Handler::Arg0(app::handlers::stylesheet));
         router
     };
 }
@@ -49,7 +45,7 @@ fn handle_request(request: Request, payload: &[u8]) -> Result<Response, failure:
             _ => panic!(),
         }
     } else {
-        handlers::not_found(uri)
+        app::handlers::not_found(uri)
     };
     Ok(res)
 }

@@ -11,5 +11,7 @@ core = { path = "../core" }
 lazy_static = "*"
 log = "*"
 tent = "*"
+uuid = "*"
 tokio = { version = "*", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
-tokio-postgres = "*"
+tokio-postgres = { version = "*", features = ["with-uuid-0_8"] }
+postgres-types = { version = "*", features = ["derive"] }
