@@ -6,7 +6,7 @@ use std::fmt;
 fn parse_fixture() -> Result<fixture::Fixture, failure::Error> {
     use std::fs::File;
 
-    let reader = File::open(".fixture.yaml")?;
+    let reader = File::open("config/fixture.yaml")?;
     let res = serde_yaml::from_reader(reader)?;
     Ok(res)
 }
@@ -30,7 +30,7 @@ async fn main() -> Result<(), failure::Error> {
     log::set_max_level(log::LevelFilter::Debug);
 
     // Config
-    let config = Config::from_file(".config.yaml")?;
+    let config = Config::from_file("config/config.yaml")?;
 
     // Database
     let (client, connection) =
@@ -43,7 +43,8 @@ async fn main() -> Result<(), failure::Error> {
     });
 
     let fixture = parse_fixture()?;
-    println!("{:?}", fixture);
+
+    let _res = client.query("DROP TABLE IF EXISTS articles", &[]).await?;
 
     let _res = client
         .query(
@@ -55,7 +56,9 @@ async fn main() -> Result<(), failure::Error> {
         )"#,
             &[],
         )
-        .await;
+        .await?;
+
+    let _res = client.query("DROP TABLE IF EXISTS users", &[]).await?;
 
     let _res = client
         .query(
@@ -69,7 +72,7 @@ async fn main() -> Result<(), failure::Error> {
         )"#,
             &[],
         )
-        .await;
+        .await?;
 
     for user in fixture.users.iter() {
         use sha2::{Digest, Sha256};
@@ -83,7 +86,7 @@ async fn main() -> Result<(), failure::Error> {
                 r#"
             INSERT INTO users (email, name, password_hashed)
             VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR)
-        "#,
+            "#,
                 &[&user.email, &user.name, &password_hashed],
             )
             .await?;

@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::fs::File;
+use std::path::Path;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -15,7 +16,7 @@ pub struct Database {
 }
 
 impl Config {
-    pub fn from_file(path: &str) -> Result<Self, failure::Error> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, failure::Error> {
         use std::io::Read;
 
         let mut file = File::open(path)?;

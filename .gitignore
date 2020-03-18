@@ -1,5 +1,5 @@
-/.config.yaml
-/.fixture.yaml
+/config/config.yaml
+/config/fixture.yaml
 /target
 **/*.rs.bk
 
