@@ -1,5 +1,5 @@
 use app::models::User;
-use core::Config;
+use hideout::Config;
 use std::env;
 use std::path::PathBuf;
 use tokio;

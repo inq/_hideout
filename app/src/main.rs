@@ -55,14 +55,9 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     let mut bytes = BytesMut::with_capacity(HEADER_SIZE);
-    unsafe {
-        bytes.set_len(HEADER_SIZE);
-    }
+    unsafe { bytes.set_len(HEADER_SIZE) };
     let len = stream.read(bytes.as_mut()).await?;
-    unsafe {
-        bytes.set_len(len);
-    }
-    log::info!("{}", len);
+    unsafe { bytes.set_len(len) };
 
     if let Some(request) = hideout::http::Request::parse(bytes.freeze()) {
         let payload = if let Some(content_length) = request.content_length() {

@@ -45,9 +45,14 @@ impl Debug for RequestLine {
 }
 
 fn slice_to_bytes(buffer: &Bytes, slice: &[u8]) -> Bytes {
-    // TODO: Find a safer way
+    let boundary = unsafe {
+        buffer
+            .as_ptr()
+            .add(buffer.len())
+            .offset_from(slice.as_ptr().add(slice.len()))
+    };
     let offset = unsafe { slice.as_ptr().offset_from(buffer.as_ptr()) };
-    assert!(offset > 0);
+    assert!(offset >= 0 && boundary >= 0, "{}, {}", offset, boundary);
     let offset = offset as usize;
     buffer.slice(offset..offset + slice.len())
 }
