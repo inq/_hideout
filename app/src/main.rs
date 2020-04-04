@@ -51,14 +51,23 @@ fn handle_request(request: Request, payload: &[u8]) -> Result<Response, failure:
 }
 
 async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
+    use bytes::BytesMut;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-    let mut buf = [0u8; HEADER_SIZE];
-    let len = stream.read(&mut buf).await?;
-    if let Some(request) = core::http::Request::parse(&buf[..len]) {
+    let mut bytes = BytesMut::with_capacity(HEADER_SIZE);
+    unsafe {
+        bytes.set_len(HEADER_SIZE);
+    }
+    let len = stream.read(bytes.as_mut()).await?;
+    unsafe {
+        bytes.set_len(len);
+    }
+    log::info!("{}", len);
+
+    if let Some(request) = core::http::Request::parse(bytes.freeze()) {
         let payload = if let Some(content_length) = request.content_length() {
             let mut payload = Vec::with_capacity(content_length);
-            payload.extend_from_slice(request.body);
+            payload.extend_from_slice(&request.body);
             let offset = payload.len();
             log::info!("Reading content: Content-Length: {}", content_length);
             let len = (&mut stream)
@@ -90,7 +99,7 @@ async fn main() -> Result<(), failure::Error> {
 
     // Config
     log::info!("\n{}", (*ROUTER).to_debug());
-    let config = core::Config::from_file(".config.yaml")?;
+    let config = core::Config::from_file("config/config.yaml")?;
 
     // Database
     let (_client, connection) =

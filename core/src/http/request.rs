@@ -5,6 +5,7 @@ use nom::multi::many1;
 use nom::sequence::terminated;
 use nom::IResult;
 
+use bytes::Bytes;
 use std::fmt::{self, Debug};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -25,22 +26,30 @@ pub enum Version {
     Http11,
 }
 
-pub struct RequestLine<'a> {
+pub struct RequestLine {
     method: Method,
-    uri: &'a [u8],
+    uri: Bytes,
     version: Version,
 }
 
-impl<'a> Debug for RequestLine<'a> {
+impl Debug for RequestLine {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "RequestLine {{ {:?} {:?} {:?} }}",
             self.method,
-            std::str::from_utf8(self.uri).or(Err(fmt::Error))?,
+            std::str::from_utf8(&self.uri).or(Err(fmt::Error))?,
             self.version
         )
     }
+}
+
+fn slice_to_bytes(buffer: &Bytes, slice: &[u8]) -> Bytes {
+    // TODO: Find a safer way
+    let offset = unsafe { slice.as_ptr().offset_from(buffer.as_ptr()) };
+    assert!(offset > 0);
+    let offset = offset as usize;
+    buffer.slice(offset..offset + slice.len())
 }
 
 fn is_token(c: u8) -> bool {
@@ -90,7 +99,7 @@ fn version(i: &[u8]) -> IResult<&[u8], Version> {
     Ok((input, version))
 }
 
-fn request_line<'a>(input: &'a [u8]) -> IResult<&'a [u8], RequestLine<'a>> {
+fn request_line<'a>(buffer: &Bytes, input: &'a [u8]) -> IResult<&'a [u8], RequestLine> {
     let (input, method) = alt((
         value(Method::Get, tag("GET ")),
         value(Method::Post, tag("POST ")),
@@ -108,62 +117,80 @@ fn request_line<'a>(input: &'a [u8]) -> IResult<&'a [u8], RequestLine<'a>> {
         input,
         RequestLine {
             method,
-            uri,
+            uri: slice_to_bytes(buffer, uri),
             version,
         },
     ))
 }
 
 #[derive(Debug)]
-pub struct Request<'a> {
-    request_line: RequestLine<'a>,
-    headers: Vec<Header<'a>>,
-    pub body: &'a [u8],
+pub struct Request {
+    request_line: RequestLine,
+    headers: Vec<Header>,
+    pub body: Bytes,
 }
 
-pub struct Header<'a> {
+pub struct RawHeader<'a> {
     name: &'a [u8],
     value: &'a [u8],
 }
 
-impl<'a> Debug for Header<'a> {
+impl<'a> RawHeader<'a> {
+    fn build(self, buffer: &Bytes) -> Header {
+        Header {
+            name: slice_to_bytes(buffer, &self.name),
+            value: slice_to_bytes(buffer, &self.value),
+        }
+    }
+}
+
+pub struct Header {
+    name: Bytes,
+    value: Bytes,
+}
+
+impl Debug for Header {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{:?}: {:?}",
-            std::str::from_utf8(self.name).or(Err(fmt::Error))?,
-            std::str::from_utf8(self.value).or(Err(fmt::Error))?,
+            std::str::from_utf8(&self.name).or(Err(fmt::Error))?,
+            std::str::from_utf8(&self.value).or(Err(fmt::Error))?,
         )
     }
 }
 
-fn header<'a>(input: &'a [u8]) -> IResult<&'a [u8], Header<'a>> {
+fn header<'a>(input: &'a [u8]) -> IResult<&'a [u8], RawHeader<'a>> {
     let (input, name) = take_while1(is_token)(input)?;
     let (input, _) = nom::character::complete::char(':')(input)?;
     let (input, _) = take_while1(is_horizontal_space)(input)?;
     let (input, value) = take_while1(not_cr)(input)?;
     let (input, _) = tag("\r\n")(input)?;
-    Ok((input, Header { name, value }))
+    Ok((input, RawHeader { name, value }))
 }
 
-fn request<'a>(input: &'a [u8]) -> IResult<&'a [u8], Request<'a>> {
-    let (input, request_line) = request_line(input)?;
-    let (input, headers) = terminated(many1(header), tag("\r\n"))(input)?;
+fn request<'a>(buffer: &Bytes, input: &'a [u8]) -> IResult<&'a [u8], Request> {
+    let (input, request_line) = request_line(&buffer, input)?;
+    let (input, raw_headers) = terminated(many1(header), tag("\r\n"))(input)?;
     let (input, body) = rest(input)?;
 
     Ok((
         input,
         Request {
             request_line,
-            headers,
-            body,
+            headers: raw_headers
+                .into_iter()
+                .map(|raw| raw.build(&buffer))
+                .collect(),
+            body: slice_to_bytes(buffer, body),
         },
     ))
 }
 
-impl<'a> Request<'a> {
-    pub fn parse(buffer: &'a [u8]) -> Option<Request<'a>> {
-        match request(buffer) {
+impl Request {
+    pub fn parse(buffer: Bytes) -> Option<Request> {
+        let input = &buffer;
+        match request(&buffer, input) {
             Ok((_, output)) => Some(output),
             _ => None,
         }
@@ -171,13 +198,13 @@ impl<'a> Request<'a> {
 
     pub fn content_length(&self) -> Option<usize> {
         for header in self.headers.iter() {
-            if header.name == b"Content-Length" {
-                return std::str::from_utf8(header.value)
+            if header.name.as_ref() == b"Content-Length" {
+                return std::str::from_utf8(&header.value)
                     .ok()
                     .and_then(|s| s.parse().ok());
             }
         }
-        return None;
+        None
     }
 
     pub fn request_line(&self) -> &RequestLine {
@@ -189,6 +216,6 @@ impl<'a> Request<'a> {
     }
 
     pub fn uri(&self) -> Result<&str, std::str::Utf8Error> {
-        std::str::from_utf8(self.request_line.uri)
+        std::str::from_utf8(&self.request_line.uri)
     }
 }

@@ -63,7 +63,7 @@ impl Router {
     }
 
     pub fn add_path(&mut self, method: Method, path: &str, handler: Handler) -> &mut Self {
-        let mut current_node = self.inner.entry(method).or_insert(Node::default());
+        let mut current_node = self.inner.entry(method).or_insert_with(Node::default);
         let mut elems = path.split('/');
 
         // Path should start with '/'

@@ -15,12 +15,7 @@ impl AssetStore {
         path: P,
         content_type: &str,
     ) -> Result<usize, failure::Error> {
-        use std::fs::File;
-        use std::io::Read;
-
-        let mut file = File::open(path)?;
-        let mut buf = vec![];
-        file.read_to_end(&mut buf)?;
+        let buf = std::fs::read(path)?;
         self.inner.push(Asset {
             data: buf,
             content_type: content_type.to_string(),

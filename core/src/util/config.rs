@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use std::fs::File;
 use std::path::Path;
 
 #[derive(Deserialize, Debug)]
@@ -17,12 +16,7 @@ pub struct Database {
 
 impl Config {
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, failure::Error> {
-        use std::io::Read;
-
-        let mut file = File::open(path)?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
-
+        let contents = std::fs::read_to_string(path)?;
         let res = serde_yaml::from_str(&contents)?;
         Ok(res)
     }
