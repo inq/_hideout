@@ -1,4 +1,4 @@
-use core::http::Response;
+use hideout::http::Response;
 
 fn render_with_layout(inner: &str) -> String {
     let path_data = vec![
@@ -85,7 +85,7 @@ pub fn session_new(_payload: &[u8]) -> Response {
 }
 
 pub fn session_create(payload: &[u8]) -> Response {
-    use core::http::FormData;
+    use hideout::http::FormData;
     let form_data = FormData::parse_x_www_form_urlencoded(payload);
 
     Response::new_html(

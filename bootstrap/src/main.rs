@@ -1,6 +1,6 @@
 mod fixture;
 
-use core::{Config, Logger};
+use hideout::{Config, Logger};
 use std::fmt;
 
 fn parse_fixture() -> Result<fixture::Fixture, failure::Error> {

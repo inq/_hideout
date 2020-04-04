@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 color-backtrace = { version = "*", features = ["failure-bt"] }
 failure = "*"
-core = { path = "../core" }
+hideout = { path = "../hideout" }
 log = "*"
 serde = "*"
 serde_yaml = "*"

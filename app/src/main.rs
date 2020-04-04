@@ -1,4 +1,4 @@
-use core::{
+use hideout::{
     http::{Request, Response},
     router::{self, Router},
     AssetStore, Logger,
@@ -64,7 +64,7 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
     }
     log::info!("{}", len);
 
-    if let Some(request) = core::http::Request::parse(bytes.freeze()) {
+    if let Some(request) = hideout::http::Request::parse(bytes.freeze()) {
         let payload = if let Some(content_length) = request.content_length() {
             let mut payload = Vec::with_capacity(content_length);
             payload.extend_from_slice(&request.body);
@@ -99,7 +99,7 @@ async fn main() -> Result<(), failure::Error> {
 
     // Config
     log::info!("\n{}", (*ROUTER).to_debug());
-    let config = core::Config::from_file("config/config.yaml")?;
+    let config = hideout::Config::from_file("config/config.yaml")?;
 
     // Database
     let (_client, connection) =

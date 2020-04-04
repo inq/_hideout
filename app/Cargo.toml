@@ -8,7 +8,7 @@ edition = "2018"
 bytes = "*"
 color-backtrace = { version = "*", features = ["failure-bt"] }
 failure = "*"
-core = { path = "../core" }
+hideout = { path = "../hideout" }
 lazy_static = "*"
 log = "*"
 tent = "*"

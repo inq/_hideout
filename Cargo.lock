@@ -18,8 +18,8 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "color-backtrace",
- "core",
  "failure",
+ "hideout",
  "lazy_static",
  "log",
  "postgres-types",
@@ -136,8 +136,8 @@ name = "bootstrap"
 version = "0.1.0"
 dependencies = [
  "color-backtrace",
- "core",
  "failure",
+ "hideout",
  "log",
  "serde",
  "serde_yaml",
@@ -206,22 +206,6 @@ dependencies = [
  "backtrace",
  "failure",
  "termcolor",
-]
-
-[[package]]
-name = "core"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "chrono",
- "failure",
- "futures",
- "log",
- "nom",
- "serde",
- "serde_yaml",
- "tokio",
- "tokio-postgres",
 ]
 
 [[package]]
@@ -451,6 +435,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "725cf19794cf90aa94e65050cb4191ff5d8fa87a498383774c47b332e3af952e"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "hideout"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "chrono",
+ "failure",
+ "futures",
+ "log",
+ "nom",
+ "serde",
+ "serde_yaml",
+ "tokio",
+ "tokio-postgres",
 ]
 
 [[package]]
