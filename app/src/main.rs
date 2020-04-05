@@ -59,26 +59,25 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
     let len = stream.read(bytes.as_mut()).await?;
     unsafe { bytes.set_len(len) };
 
-    if let Some(request) = hideout::http::Request::parse(bytes.freeze()) {
-        let payload = if let Some(content_length) = request.content_length() {
-            let mut payload = Vec::with_capacity(content_length);
-            payload.extend_from_slice(&request.body);
-            let offset = payload.len();
-            log::info!("Reading content: Content-Length: {}", content_length);
-            let len = (&mut stream)
-                .take((content_length - offset) as u64)
-                .read_to_end(&mut payload)
-                .await?;
-            assert!(len == content_length);
-            payload
-        } else {
-            vec![]
-        };
+    let request = hideout::http::Request::parse(bytes.freeze())?;
+    let payload = if let Some(content_length) = request.content_length() {
+        let mut payload = Vec::with_capacity(content_length);
+        payload.extend_from_slice(&request.body);
+        let offset = payload.len();
+        log::info!("Reading content: Content-Length: {}", content_length);
+        let len = (&mut stream)
+            .take((content_length - offset) as u64)
+            .read_to_end(&mut payload)
+            .await?;
+        assert!(len == content_length);
+        payload
+    } else {
+        vec![]
+    };
 
-        let response = handle_request(request, &payload)?;
-        stream.write(response.header.to_string().as_bytes()).await?;
-        stream.write(&response.payload).await?;
-    }
+    let response = handle_request(request, &payload)?;
+    stream.write(response.header.to_string().as_bytes()).await?;
+    stream.write(&response.payload).await?;
     Ok(())
 }
 

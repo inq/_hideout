@@ -9,8 +9,8 @@ bytes = "*"
 chrono = "*"
 failure = "*"
 futures = "*"
+httparse = "*"
 log = "*"
-nom = "*"
 serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
 tokio = { version = "*", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
