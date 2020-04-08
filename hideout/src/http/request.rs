@@ -1,3 +1,4 @@
+use crate::http::Uri;
 use bytes::Bytes;
 use std::fmt::{self, Debug};
 
@@ -59,8 +60,24 @@ impl std::convert::From<u8> for Version {
 
 pub struct RequestLine {
     method: Method,
-    uri: Bytes,
+    uri: Uri,
     version: Version,
+}
+
+impl RequestLine {
+    pub fn from_parsed(buffer: &Bytes, parsed: &httparse::Request) -> Result<Self, failure::Error> {
+        use std::str::FromStr;
+
+        let method = Method::from_str(parsed.method.unwrap())?;
+        let uri = Uri::from_bytes(&slice_to_bytes(buffer, parsed.path.unwrap().as_bytes()))?;
+        let version = parsed.version.unwrap().into();
+
+        Ok(Self {
+            method,
+            uri,
+            version,
+        })
+    }
 }
 
 impl Debug for RequestLine {
@@ -68,9 +85,7 @@ impl Debug for RequestLine {
         write!(
             f,
             "RequestLine {{ {:?} {:?} {:?} }}",
-            self.method,
-            std::str::from_utf8(&self.uri).or(Err(fmt::Error))?,
-            self.version
+            self.method, self.uri, self.version
         )
     }
 }
@@ -108,22 +123,6 @@ impl Debug for Header {
             std::str::from_utf8(&self.name).or(Err(fmt::Error))?,
             std::str::from_utf8(&self.value).or(Err(fmt::Error))?,
         )
-    }
-}
-
-impl RequestLine {
-    pub fn from_parsed(buffer: &Bytes, parsed: &httparse::Request) -> Result<Self, failure::Error> {
-        use std::str::FromStr;
-
-        let method = Method::from_str(parsed.method.unwrap())?;
-        let uri = slice_to_bytes(buffer, parsed.path.unwrap().as_bytes());
-        let version = parsed.version.unwrap().into();
-
-        Ok(Self {
-            method,
-            uri,
-            version,
-        })
     }
 }
 
@@ -167,7 +166,7 @@ impl Request {
         self.request_line.method
     }
 
-    pub fn uri(&self) -> Result<&str, std::str::Utf8Error> {
-        std::str::from_utf8(&self.request_line.uri)
+    pub fn uri(&self) -> &Uri {
+        &self.request_line.uri
     }
 }

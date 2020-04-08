@@ -33,20 +33,8 @@ fn handle_request(request: Request, payload: &[u8]) -> Result<Response, failure:
         request.request_line(),
         std::str::from_utf8(payload)?
     );
-    let uri = request.uri()?;
-    let res = if let Some((handler, args)) = ROUTER.route(request.method(), uri) {
-        use router::{Args, Handler};
-
-        match (handler, args) {
-            (Handler::Resource(id), Args::Arg0) => ROUTER.asset_store.serve(id),
-            (Handler::Arg0(func), Args::Arg0) => func(payload),
-            (Handler::Arg1(func), Args::Arg1(arg0)) => func(payload, arg0),
-            (Handler::Arg2(func), Args::Arg2(arg0, arg1)) => func(payload, arg0, arg1),
-            _ => panic!(),
-        }
-    } else {
-        app::handlers::not_found(uri)
-    };
+    
+    let res = app::handlers::index(payload);
     Ok(res)
 }
 
