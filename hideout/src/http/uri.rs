@@ -18,13 +18,28 @@ pub enum Error {
 
 #[derive(Debug)]
 pub struct Uri {
+    inner: Bytes,
     path: Vec<Bytes>,
     query: Vec<(Bytes, Option<Bytes>)>,
     fragment: Option<Bytes>,
 }
 
 impl Uri {
-    pub fn from_bytes(bytes: &Bytes) -> Result<Self, Error> {
+    pub fn len_path(&self) -> usize {
+        self.path.len()
+    }
+
+    pub fn nth_path(&self, idx: usize) -> Option<&str> {
+        self.path
+            .get(idx)
+            .map(|path| unsafe { std::str::from_utf8_unchecked(&path) })
+    }
+
+    pub fn as_str(&self) -> &str {
+        unsafe { std::str::from_utf8_unchecked(&self.inner) }
+    }
+
+    pub fn from_bytes(bytes: Bytes) -> Result<Self, Error> {
         let data = unsafe { std::str::from_utf8_unchecked(&bytes) };
         let mut state = State::Initial;
         let mut path = vec![];
@@ -71,7 +86,9 @@ impl Uri {
             State::Initial => (),
             State::PathToken(start_at) => {
                 let token = bytes.slice(start_at..);
-                path.push(token);
+                if !token.is_empty() {
+                    path.push(token);
+                }
             }
             State::QueryKey(start_at) => {
                 let key = bytes.slice(start_at..);
@@ -85,6 +102,7 @@ impl Uri {
             State::Fragment(start_at) => fragment = Some(bytes.slice(start_at..)),
         }
         Ok(Uri {
+            inner: bytes,
             path,
             query,
             fragment,
@@ -99,7 +117,7 @@ mod tests {
     #[test]
     fn it_works() {
         let bytes = Bytes::from_static(b"/hello/world?param=?&?=?#fragment=#123");
-        let uri = Uri::from_bytes(&bytes).unwrap();
+        let uri = Uri::from_bytes(bytes).unwrap();
         assert!(
             matches!(uri.fragment, Some(fragment) if fragment == Bytes::from_static(b"fragment=#123"))
         );

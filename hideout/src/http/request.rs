@@ -69,7 +69,7 @@ impl RequestLine {
         use std::str::FromStr;
 
         let method = Method::from_str(parsed.method.unwrap())?;
-        let uri = Uri::from_bytes(&slice_to_bytes(buffer, parsed.path.unwrap().as_bytes()))?;
+        let uri = Uri::from_bytes(slice_to_bytes(buffer, parsed.path.unwrap().as_bytes()))?;
         let version = parsed.version.unwrap().into();
 
         Ok(Self {

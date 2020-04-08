@@ -1,42 +1,7 @@
-use hideout::{
-    http::{Request, Response},
-    router::{self, Router},
-    AssetStore, Logger,
-};
-
+use hideout::Logger;
 use tokio::net::{TcpListener, TcpStream};
 
-lazy_static::lazy_static! {
-    static ref ROUTER: Router = {
-        use router::Handler;
-
-        let mut asset_store = AssetStore::new();
-        let asset0 = asset_store.add("assets/raleway-light.woff", "font/woff").unwrap();
-
-        let mut router  = Router::new(asset_store);
-        router.add_get("/assets/raleway-light.woff", Handler::Resource(asset0));
-        router.add_get("/articles/:article_id", Handler::Arg1(app::handlers::article_show));
-        router.add_get("/articles/list", Handler::Arg0(app::handlers::article_list));
-        router.add_get("/session/new", Handler::Arg0(app::handlers::session_new));
-        router.add_post("/session/create", Handler::Arg0(app::handlers::session_create));
-        router.add_get("/", Handler::Arg0(app::handlers::index));
-        router.add_get("/main.css", Handler::Arg0(app::handlers::stylesheet));
-        router
-    };
-}
-
 const HEADER_SIZE: usize = 2048;
-
-fn handle_request(request: Request, payload: &[u8]) -> Result<Response, failure::Error> {
-    log::info!(
-        "REQUEST: {:?} ({})",
-        request.request_line(),
-        std::str::from_utf8(payload)?
-    );
-    
-    let res = app::handlers::index(payload);
-    Ok(res)
-}
 
 async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
     use bytes::BytesMut;
@@ -63,7 +28,7 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
         vec![]
     };
 
-    let response = handle_request(request, &payload)?;
+    let response = app::controllers::Root::serve(request, &payload).await;
     stream.write(response.header.to_string().as_bytes()).await?;
     stream.write(&response.payload).await?;
     Ok(())
@@ -80,7 +45,6 @@ async fn main() -> Result<(), failure::Error> {
     log::set_max_level(log::LevelFilter::Debug);
 
     // Config
-    log::info!("\n{}", (*ROUTER).to_debug());
     let config = hideout::Config::from_file("config/config.yaml")?;
 
     // Database
