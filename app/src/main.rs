@@ -1,9 +1,12 @@
-use hideout::Logger;
+use hideout::util::Logger;
 use tokio::net::{TcpListener, TcpStream};
 
 const HEADER_SIZE: usize = 2048;
 
-async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
+async fn process(
+    context: hideout::model::Context,
+    mut stream: TcpStream,
+) -> Result<(), failure::Error> {
     use bytes::BytesMut;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -28,15 +31,13 @@ async fn process(mut stream: TcpStream) -> Result<(), failure::Error> {
         vec![]
     };
 
-    let response = app::controllers::Root::serve(request, &payload).await;
+    let response = app::controllers::Root::serve(request, context, &payload).await;
     stream.write(response.header.to_string().as_bytes()).await?;
     stream.write(&response.payload).await?;
     Ok(())
 }
 
-#[tokio::main]
-async fn main() -> Result<(), failure::Error> {
-    use std::net::Ipv4Addr;
+async fn _main() -> Result<(), failure::Error> {
     use tokio::stream::StreamExt;
 
     // Log
@@ -44,26 +45,24 @@ async fn main() -> Result<(), failure::Error> {
     log::set_logger(&Logger).unwrap();
     log::set_max_level(log::LevelFilter::Debug);
 
-    // Config
-    let config = hideout::Config::from_file("config/config.yaml")?;
+    let config = hideout::util::Config::from_file("config/config.yaml")?;
+    let context = hideout::model::Context::new(config).await?;
 
-    // Database
-    let (_client, connection) =
-        tokio_postgres::connect(&config.database_string(), tokio_postgres::NoTls).await?;
-
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("connection error: {}", e);
-        }
-    });
-
-    let addr = (Ipv4Addr::new(127, 0, 0, 1), 8080);
+    let addr = (std::net::Ipv4Addr::new(127, 0, 0, 1), 8080);
     log::info!("Listening on: {:?}", addr);
     let mut listener = TcpListener::bind(addr).await?;
 
     let mut incoming = listener.incoming();
+
     loop {
         let stream = incoming.next().await.unwrap()?;
-        tokio::spawn(process(stream));
+        tokio::task::spawn_local(process(context.clone(), stream));
     }
+}
+
+fn main() -> Result<(), failure::Error> {
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    tokio::task::LocalSet::new().block_on(&mut rt, _main())?;
+
+    Ok(())
 }

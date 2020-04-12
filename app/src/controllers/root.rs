@@ -1,14 +1,24 @@
 use hideout::http::{Request, Response};
+use hideout::model::Context;
 
 pub struct Root {}
 
 impl Root {
-    pub(super) async fn serve_inner(request: Request, payload: &[u8], idx: usize) -> Response {
+    pub(super) async fn serve_inner(
+        request: Request,
+        context: Context,
+        payload: &[u8],
+        idx: usize,
+    ) -> Response {
         match request.uri().nth_path(idx) {
             None => Self::index(),
-            Some("articles") => super::Articles::serve_inner(request, payload, idx + 1).await,
+            Some("articles") => {
+                super::Articles::serve_inner(request, context, payload, idx + 1).await
+            }
             Some("assets") => super::Assets::serve_inner(request, payload, idx + 1).await,
-            Some("session") => super::Session::serve_inner(request, payload, idx + 1).await,
+            Some("session") => {
+                super::Session::serve_inner(request, context, payload, idx + 1).await
+            }
             Some("main.css") => Self::stylesheet(),
             _ => crate::handlers::not_found(request.uri().as_str()),
         }
@@ -101,7 +111,7 @@ impl Root {
         )
     }
 
-    pub async fn serve(request: Request, payload: &[u8]) -> Response {
-        Self::serve_inner(request, payload, 0).await
+    pub async fn serve(request: Request, context: Context, payload: &[u8]) -> Response {
+        Self::serve_inner(request, context, payload, 0).await
     }
 }

@@ -1,6 +1,6 @@
 use hideout::{
     http::{Request, Response},
-    AssetStore,
+    util::AssetStore,
 };
 pub(super) struct Assets {}
 

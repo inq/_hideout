@@ -3,8 +3,5 @@
 #[macro_use]
 extern crate failure;
 pub mod http;
-mod logger;
-mod util;
-
-pub use logger::Logger;
-pub use util::{AssetStore, Config};
+pub mod model;
+pub mod util;

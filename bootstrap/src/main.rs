@@ -1,7 +1,6 @@
 mod fixture;
 
-use hideout::{Config, Logger};
-use std::fmt;
+use hideout::util::{Config, Logger};
 
 fn parse_fixture() -> Result<fixture::Fixture, failure::Error> {
     use std::fs::File;
@@ -9,17 +8,6 @@ fn parse_fixture() -> Result<fixture::Fixture, failure::Error> {
     let reader = File::open("config/fixture.yaml")?;
     let res = serde_yaml::from_reader(reader)?;
     Ok(res)
-}
-
-struct HexBytes<'a>(&'a [u8]);
-
-impl<'a> fmt::Display for HexBytes<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for byte in self.0 {
-            write!(f, "{:02x}", byte)?;
-        }
-        Ok(())
-    }
 }
 
 #[tokio::main]
@@ -75,11 +63,7 @@ async fn main() -> Result<(), failure::Error> {
         .await?;
 
     for user in fixture.users.iter() {
-        use sha2::{Digest, Sha256};
-        let mut hasher = Sha256::new();
-        hasher.input(&user.password);
-        let result = hasher.result();
-        let password_hashed = HexBytes(&result).to_string();
+        let password_hashed = hideout::util::Password::new(&user.password).hashed();
 
         let _res = client
             .query(

@@ -13,5 +13,9 @@ httparse = "*"
 log = "*"
 serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
-tokio = { version = "*", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
+sha2 = "*"
+tokio = { version = "*", features = ["io-util", "rt-core", "rt-util", "stream", "tcp"] }
 tokio-postgres = "*"
+
+[dev-dependencies]
+tokio = { version = "*", features = ["io-util", "macros", "rt-core", "rt-util", "stream", "tcp"] }

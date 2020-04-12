@@ -1,12 +1,8 @@
-#[derive(Debug)]
-pub struct FormEntry {
-    name: String,
-    value: String,
-}
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct FormData {
-    data: Vec<FormEntry>,
+    inner: HashMap<String, String>,
 }
 
 #[derive(Debug)]
@@ -31,7 +27,7 @@ enum Error {
 
 impl FormData {
     pub fn parse_x_www_form_urlencoded(input: &[u8]) -> Result<FormData, failure::Error> {
-        let mut res = vec![];
+        let mut res = HashMap::new();
         let mut buf = vec![];
         let mut state = State::Normal;
         let mut word_state = WordState::Normal;
@@ -42,17 +38,11 @@ impl FormData {
                 }
                 (State::Normal, WordState::Normal, b'&') => {
                     let name = String::from_utf8(std::mem::take(&mut buf))?;
-                    res.push(FormEntry {
-                        name,
-                        value: "".to_string(),
-                    });
+                    res.insert(name, "".to_string());
                 }
                 (State::HasName(name), WordState::Normal, b'&') => {
                     let value = String::from_utf8(std::mem::take(&mut buf))?;
-                    res.push(FormEntry {
-                        name: std::mem::take(name),
-                        value,
-                    });
+                    res.insert(std::mem::take(name), value);
                     state = State::Normal;
                 }
                 (_, WordState::Normal, b'%') => {
@@ -81,19 +71,20 @@ impl FormData {
         match (state, word_state) {
             (State::Normal, WordState::Normal) => {
                 let name = String::from_utf8(std::mem::take(&mut buf))?;
-                res.push(FormEntry {
-                    name,
-                    value: "".to_string(),
-                });
+                res.insert(name, "".to_string());
             }
             (State::HasName(name), WordState::Normal) => {
                 let value = String::from_utf8(std::mem::take(&mut buf))?;
-                res.push(FormEntry { name, value });
+                res.insert(name, value);
             }
             _ => {
                 return Err(Error::InvalidInput.into());
             }
         }
-        Ok(FormData { data: res })
+        Ok(FormData { inner: res })
+    }
+
+    pub fn get(&self, key: &str) -> Option<&String> {
+        self.inner.get(key)
     }
 }
