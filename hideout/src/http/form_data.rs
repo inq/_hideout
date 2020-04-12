@@ -18,15 +18,20 @@ enum WordState {
     Value(u8),
 }
 
-// TODO: Give detailed error
 #[derive(Debug, Fail)]
-enum Error {
+pub enum Error {
     #[fail(display = "invalid input")]
     InvalidInput,
+    #[fail(display = "Utf8 error")]
+    Utf8,
 }
 
 impl FormData {
-    pub fn parse_x_www_form_urlencoded(input: &[u8]) -> Result<FormData, failure::Error> {
+    fn string_from_utf8(vec: Vec<u8>) -> Result<String, Error> {
+        String::from_utf8(vec).map_err(|_| Error::Utf8)
+    }
+
+    pub fn parse_x_www_form_urlencoded(input: &[u8]) -> Result<FormData, Error> {
         let mut res = HashMap::new();
         let mut buf = vec![];
         let mut state = State::Normal;
@@ -34,14 +39,14 @@ impl FormData {
         for c in input {
             match (&mut state, &word_state, c) {
                 (State::Normal, WordState::Normal, b'=') => {
-                    state = State::HasName(String::from_utf8(std::mem::take(&mut buf))?);
+                    state = State::HasName(Self::string_from_utf8(std::mem::take(&mut buf))?);
                 }
                 (State::Normal, WordState::Normal, b'&') => {
-                    let name = String::from_utf8(std::mem::take(&mut buf))?;
+                    let name = Self::string_from_utf8(std::mem::take(&mut buf))?;
                     res.insert(name, "".to_string());
                 }
                 (State::HasName(name), WordState::Normal, b'&') => {
-                    let value = String::from_utf8(std::mem::take(&mut buf))?;
+                    let value = Self::string_from_utf8(std::mem::take(&mut buf))?;
                     res.insert(std::mem::take(name), value);
                     state = State::Normal;
                 }
@@ -55,7 +60,7 @@ impl FormData {
                     if let Some(num) = (*c as char).to_digit(16) {
                         word_state = WordState::Value(num as u8);
                     } else {
-                        return Err(Error::InvalidInput.into());
+                        return Err(Error::InvalidInput);
                     }
                 }
                 (_, WordState::Value(parent), c) => {
@@ -63,22 +68,22 @@ impl FormData {
                         buf.push(parent * 16 + num as u8);
                         word_state = WordState::Normal;
                     } else {
-                        return Err(Error::InvalidInput.into());
+                        return Err(Error::InvalidInput);
                     }
                 }
             }
         }
         match (state, word_state) {
             (State::Normal, WordState::Normal) => {
-                let name = String::from_utf8(std::mem::take(&mut buf))?;
+                let name = Self::string_from_utf8(std::mem::take(&mut buf))?;
                 res.insert(name, "".to_string());
             }
             (State::HasName(name), WordState::Normal) => {
-                let value = String::from_utf8(std::mem::take(&mut buf))?;
+                let value = Self::string_from_utf8(std::mem::take(&mut buf))?;
                 res.insert(name, value);
             }
             _ => {
-                return Err(Error::InvalidInput.into());
+                return Err(Error::InvalidInput);
             }
         }
         Ok(FormData { inner: res })

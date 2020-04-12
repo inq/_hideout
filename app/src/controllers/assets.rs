@@ -15,13 +15,12 @@ impl Assets {
         _payload: &[u8],
         idx: usize,
     ) -> http::Result<http::Response> {
-        match (request.uri().nth_path(idx), request.uri().nth_path(idx + 1)) {
-            (Some(resource), None) => {
-                if let Some(res) = STORE.serve(resource) {
-                    return Ok(res);
-                }
+        if let (Some(resource), None) =
+            (request.uri().nth_path(idx), request.uri().nth_path(idx + 1))
+        {
+            if let Some(res) = STORE.serve(resource) {
+                return Ok(res);
             }
-            _ => (),
         }
         Err(http::Error::NotFound {
             uri: request.uri().as_str().to_string(),
