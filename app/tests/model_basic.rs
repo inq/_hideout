@@ -1,5 +1,5 @@
 use app::models::User;
-use hideout::Config;
+use hideout::util::Config;
 use std::env;
 use std::path::PathBuf;
 use tokio;

@@ -1,25 +1,25 @@
-use hideout::{
-    http::{Request, Response},
-    model::Context,
-};
+use hideout::{http, model::Context};
+
 pub(super) struct Session {}
 
 impl Session {
     pub(super) async fn serve_inner(
-        request: Request,
+        request: http::Request,
         context: Context,
         payload: &[u8],
         idx: usize,
-    ) -> Response {
+    ) -> http::Result<http::Response> {
         match request.uri().nth_path(idx) {
-            Some("new") => Self::handle_new(),
-            Some("create") => Self::create(context, payload).await,
-            _ => crate::handlers::not_found(request.uri().as_str()),
+            Some("new") => Ok(Self::handle_new()),
+            Some("create") => Ok(Self::create(context, payload).await),
+            _ => Err(http::Error::NotFound {
+                uri: request.uri().as_str().to_string(),
+            }),
         }
     }
 
-    fn handle_new() -> Response {
-        Response::new_html(
+    fn handle_new() -> http::Response {
+        http::Response::new_html(
             200,
             &super::render_with_layout(
                 &tent::html!(
@@ -43,7 +43,7 @@ impl Session {
         )
     }
 
-    async fn create(context: Context, payload: &[u8]) -> Response {
+    async fn create(context: Context, payload: &[u8]) -> http::Response {
         // TODO: Handle errors
         use hideout::http::FormData;
         use hideout::util::Password;
@@ -65,7 +65,7 @@ impl Session {
         if rows.len() == 1 {
             let row = &rows[0];
 
-            Response::new_html(
+            http::Response::new_html(
                 200,
                 &super::render_with_layout(
                     &tent::html!(
@@ -76,7 +76,7 @@ impl Session {
                 ),
             )
         } else {
-            Response::new_html(
+            http::Response::new_html(
                 200,
                 &super::render_with_layout(
                     &tent::html!({ format!("NOT FOUND: {}", email) }).to_string(),

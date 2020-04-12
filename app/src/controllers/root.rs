@@ -1,17 +1,16 @@
-use hideout::http::{Request, Response};
-use hideout::model::Context;
+use hideout::{http, model::Context};
 
 pub struct Root {}
 
 impl Root {
     pub(super) async fn serve_inner(
-        request: Request,
+        request: http::Request,
         context: Context,
         payload: &[u8],
         idx: usize,
-    ) -> Response {
+    ) -> http::Result<http::Response> {
         match request.uri().nth_path(idx) {
-            None => Self::index(),
+            None => Ok(Self::index()),
             Some("articles") => {
                 super::Articles::serve_inner(request, context, payload, idx + 1).await
             }
@@ -19,12 +18,14 @@ impl Root {
             Some("session") => {
                 super::Session::serve_inner(request, context, payload, idx + 1).await
             }
-            Some("main.css") => Self::stylesheet(),
-            _ => crate::handlers::not_found(request.uri().as_str()),
+            Some("main.css") => Ok(Self::stylesheet()),
+            _ => Err(http::Error::NotFound {
+                uri: request.uri().as_str().to_string(),
+            }),
         }
     }
 
-    fn index() -> Response {
+    fn index() -> http::Response {
         let content = r#"
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
             incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
@@ -32,7 +33,7 @@ impl Root {
             irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
             pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
             deserunt mollit anim id est laborum."#;
-        Response::new_html(
+        http::Response::new_html(
             200,
             &super::render_with_layout(
                 &tent::html!(
@@ -48,8 +49,8 @@ impl Root {
         )
     }
 
-    fn stylesheet() -> Response {
-        Response::new_html(
+    fn stylesheet() -> http::Response {
+        http::Response::new_html(
             200,
             &tent::css!(
                 @fontFace
@@ -111,7 +112,11 @@ impl Root {
         )
     }
 
-    pub async fn serve(request: Request, context: Context, payload: &[u8]) -> Response {
+    pub async fn serve(
+        request: http::Request,
+        context: Context,
+        payload: &[u8],
+    ) -> http::Result<http::Response> {
         Self::serve_inner(request, context, payload, 0).await
     }
 }

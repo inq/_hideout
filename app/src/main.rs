@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use hideout::util::Logger;
+use hideout::{http, util::Logger};
 use tokio::net::{TcpListener, TcpStream};
 
 const HEADER_SIZE: usize = 2048;
@@ -13,6 +13,13 @@ async fn prepare_buffer(stream: &mut TcpStream) -> Result<Bytes, failure::Error>
     let len = stream.read(buffer.as_mut()).await?;
     unsafe { buffer.set_len(len) };
     Ok(buffer.freeze())
+}
+
+fn unwrap_response(response: http::Result<http::Response>) -> http::Response {
+    match response {
+        Ok(res) => res,
+        Err(http::Error::NotFound { uri }) => app::handlers::not_found(&uri),
+    }
 }
 
 async fn process(
@@ -40,6 +47,7 @@ async fn process(
     };
 
     let response = app::controllers::Root::serve(request, context, &payload).await;
+    let response = unwrap_response(response);
     stream.write(response.header.to_string().as_bytes()).await?;
     stream.write(&response.payload).await?;
     Ok(())

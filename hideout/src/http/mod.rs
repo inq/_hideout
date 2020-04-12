@@ -9,3 +9,17 @@ pub use request::{Method, Request};
 pub use response::Response;
 pub use status::StatusCode;
 pub use uri::Uri;
+
+pub enum Error {
+    NotFound { uri: String },
+}
+
+impl Error {
+    pub fn status_code(&self) -> i32 {
+        match self {
+            Error::NotFound { .. } => 404,
+        }
+    }
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
