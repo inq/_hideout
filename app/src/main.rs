@@ -1,21 +1,29 @@
+use bytes::Bytes;
 use hideout::util::Logger;
 use tokio::net::{TcpListener, TcpStream};
 
 const HEADER_SIZE: usize = 2048;
 
+async fn prepare_buffer(stream: &mut TcpStream) -> Result<Bytes, failure::Error> {
+    use bytes::BytesMut;
+    use tokio::io::AsyncReadExt;
+
+    let mut buffer = BytesMut::with_capacity(HEADER_SIZE);
+    unsafe { buffer.set_len(HEADER_SIZE) };
+    let len = stream.read(buffer.as_mut()).await?;
+    unsafe { buffer.set_len(len) };
+    Ok(buffer.freeze())
+}
+
 async fn process(
     context: hideout::model::Context,
     mut stream: TcpStream,
 ) -> Result<(), failure::Error> {
-    use bytes::BytesMut;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-    let mut bytes = BytesMut::with_capacity(HEADER_SIZE);
-    unsafe { bytes.set_len(HEADER_SIZE) };
-    let len = stream.read(bytes.as_mut()).await?;
-    unsafe { bytes.set_len(len) };
+    let buffer = prepare_buffer(&mut stream).await?;
 
-    let request = hideout::http::Request::parse(bytes.freeze())?;
+    let request = hideout::http::Request::parse(buffer)?;
     let payload = if let Some(content_length) = request.content_length() {
         let mut payload = Vec::with_capacity(content_length);
         payload.extend_from_slice(&request.body);
@@ -40,7 +48,6 @@ async fn process(
 async fn _main() -> Result<(), failure::Error> {
     use tokio::stream::StreamExt;
 
-    // Log
     color_backtrace::install();
     log::set_logger(&Logger).unwrap();
     log::set_max_level(log::LevelFilter::Debug);
