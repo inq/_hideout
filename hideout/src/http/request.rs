@@ -69,7 +69,15 @@ impl RequestLine {
         use std::str::FromStr;
 
         let method = Method::from_str(parsed.method.unwrap())?;
-        let uri = Uri::from_bytes(slice_to_bytes(buffer, parsed.path.unwrap().as_bytes()))?;
+
+        let uri = {
+            use crate::util::RcString;
+            use std::convert::TryFrom;
+
+            let rc_string =
+                RcString::from_utf8_unsafe(buffer.slice_ref(parsed.path.unwrap().as_bytes()));
+            Uri::try_from(rc_string)?
+        };
         let version = parsed.version.unwrap().into();
 
         Ok(Self {

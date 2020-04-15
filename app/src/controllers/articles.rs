@@ -14,7 +14,7 @@ impl Articles {
             Some("list") => Ok(Self::list(context)),
             Some(article_id) => Ok(Self::show(context, article_id)),
             _ => Err(http::Error::NotFound {
-                uri: request.uri().as_str().to_string(),
+                uri: request.uri().as_ref().to_string(),
             }),
         }
     }

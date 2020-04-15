@@ -21,7 +21,7 @@ impl Root {
             }
             Some("main.css") => Ok(Self::stylesheet()),
             _ => Err(http::Error::NotFound {
-                uri: request.uri().as_str().to_string(),
+                uri: request.uri().as_ref().to_string(),
             }),
         }
     }

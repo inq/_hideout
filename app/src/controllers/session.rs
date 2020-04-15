@@ -23,7 +23,7 @@ impl Session {
             Some("new") => Ok(Self::session_new()),
             Some("create") => Ok(Self::create(context, payload).await),
             _ => Err(http::Error::NotFound {
-                uri: request.uri().as_str().to_string(),
+                uri: request.uri().as_ref().to_string(),
             }),
         }
     }

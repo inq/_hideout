@@ -1,5 +1,6 @@
-use bytes::Bytes;
+use crate::util::RcString;
 use failure::Fail;
+use std::convert;
 
 #[derive(Debug)]
 pub enum State {
@@ -18,10 +19,10 @@ pub enum Error {
 
 #[derive(Debug)]
 pub struct Uri {
-    inner: Bytes,
-    path: Vec<Bytes>,
-    query: Vec<(Bytes, Option<Bytes>)>,
-    fragment: Option<Bytes>,
+    inner: RcString,
+    path: Vec<RcString>,
+    query: Vec<(RcString, Option<RcString>)>,
+    fragment: Option<RcString>,
 }
 
 impl Uri {
@@ -30,27 +31,31 @@ impl Uri {
     }
 
     pub fn nth_path(&self, idx: usize) -> Option<&str> {
-        self.path
-            .get(idx)
-            .map(|path| unsafe { std::str::from_utf8_unchecked(&path) })
+        self.path.get(idx).map(std::convert::AsRef::as_ref)
     }
+}
 
-    pub fn as_str(&self) -> &str {
-        unsafe { std::str::from_utf8_unchecked(&self.inner) }
+impl convert::AsRef<str> for Uri {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.inner.as_ref()
     }
+}
 
-    pub fn from_bytes(bytes: Bytes) -> Result<Self, Error> {
-        let data = unsafe { std::str::from_utf8_unchecked(&bytes) };
+impl convert::TryFrom<RcString> for Uri {
+    type Error = Error;
+
+    fn try_from(value: RcString) -> Result<Self, Self::Error> {
         let mut state = State::Initial;
         let mut path = vec![];
         let mut query = vec![];
         let mut fragment = None;
 
-        for (idx, chr) in data.char_indices() {
+        for (idx, chr) in value.as_ref().char_indices() {
             state = match (state, chr) {
                 (State::Initial, '/') => State::PathToken(idx + 1),
                 (State::PathToken(start_at), chr @ ('/' | '?' | '#')) => {
-                    let token = bytes.slice(start_at..idx);
+                    let token = value.slice(start_at..idx);
                     path.push(token);
                     match chr {
                         '/' => State::PathToken(idx + 1),
@@ -60,7 +65,7 @@ impl Uri {
                     }
                 }
                 (State::QueryKey(start_at), chr @ ('&' | '#')) => {
-                    let key = bytes.slice(start_at..idx);
+                    let key = value.slice(start_at..idx);
                     query.push((key, None));
                     match chr {
                         '&' => State::QueryKey(idx + 1),
@@ -70,8 +75,8 @@ impl Uri {
                 }
                 (State::QueryKey(start_at), '=') => State::QueryValue(start_at, idx + 1),
                 (State::QueryValue(key_start_at, value_start_at), chr @ ('&' | '#')) => {
-                    let key = bytes.slice(key_start_at..value_start_at - 1);
-                    let value = bytes.slice(value_start_at..idx);
+                    let key = value.slice(key_start_at..value_start_at - 1);
+                    let value = value.slice(value_start_at..idx);
                     query.push((key, Some(value)));
                     match chr {
                         '&' => State::QueryKey(idx + 1),
@@ -85,24 +90,24 @@ impl Uri {
         match state {
             State::Initial => (),
             State::PathToken(start_at) => {
-                let token = bytes.slice(start_at..);
-                if !token.is_empty() {
+                let token = value.slice(start_at..);
+                if !token.as_ref().is_empty() {
                     path.push(token);
                 }
             }
             State::QueryKey(start_at) => {
-                let key = bytes.slice(start_at..);
+                let key = value.slice(start_at..);
                 query.push((key, None));
             }
             State::QueryValue(key_start_at, value_start_at) => {
-                let key = bytes.slice(key_start_at..value_start_at - 1);
-                let value = bytes.slice(value_start_at..);
+                let key = value.slice(key_start_at..value_start_at - 1);
+                let value = value.slice(value_start_at..);
                 query.push((key, Some(value)));
             }
-            State::Fragment(start_at) => fragment = Some(bytes.slice(start_at..)),
+            State::Fragment(start_at) => fragment = Some(value.slice(start_at..)),
         }
         Ok(Uri {
-            inner: bytes,
+            inner: value,
             path,
             query,
             fragment,
@@ -116,10 +121,11 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let bytes = Bytes::from_static(b"/hello/world?param=?&?=?#fragment=#123");
-        let uri = Uri::from_bytes(bytes).unwrap();
-        assert!(
-            matches!(uri.fragment, Some(fragment) if fragment == Bytes::from_static(b"fragment=#123"))
-        );
+        use std::convert::TryFrom;
+
+        let bytes = bytes::Bytes::from_static(b"/hello/world?param=?&?=?#fragment=#123");
+        let rc_string = RcString::from_utf8(bytes).unwrap();
+        let uri = Uri::try_from(rc_string).unwrap();
+        assert!(matches!(uri.fragment, Some(fragment) if fragment.as_ref() == "fragment=#123"));
     }
 }
