@@ -1,20 +1,24 @@
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct User<'a> {
+pub struct User {
     id: Uuid,
-    email: &'a str,
-    name: &'a str,
-    password_hashed: &'a str,
+    email: String, // TODO: Use Bytes
+    name: String,
+    password_hashed: String,
 }
 
-impl<'a> User<'a> {
-    pub fn new<'b>(id: Uuid, email: &'b str, name: &'b str, password_hashed: &'b str) -> User<'b> {
+impl User {
+    pub fn new(id: Uuid, email: String, name: String, password_hashed: String) -> User {
         User {
             id,
             email,
             name,
             password_hashed,
         }
+    }
+
+    pub fn email(&self) -> &str {
+        &self.email
     }
 }

@@ -1,4 +1,6 @@
-use hideout::{http, model::Context};
+use crate::Context;
+use hideout::http;
+
 pub(super) struct Articles {}
 
 impl Articles {
@@ -20,6 +22,7 @@ impl Articles {
     fn show(_context: Context, article_id: &str) -> http::Response {
         http::Response::new_html(
             200,
+            vec![],
             &super::render_with_layout(
                 &tent::html!(
                     article
@@ -33,6 +36,7 @@ impl Articles {
     fn list(_context: Context) -> http::Response {
         http::Response::new_html(
             200,
+            vec![],
             &super::render_with_layout(
                 &tent::html!(
                     article

@@ -1,5 +1,6 @@
+use crate::Context;
 use failure::Fail;
-use hideout::{http, model::Context};
+use hideout::http;
 
 pub(super) struct Session {}
 
@@ -30,6 +31,7 @@ impl Session {
     fn session_new() -> http::Response {
         http::Response::new_html(
             200,
+            vec![],
             &super::render_with_layout(
                 &tent::html!(
                     article
@@ -78,6 +80,7 @@ impl Session {
 
         Ok(http::Response::new_html(
             200,
+            vec![],
             &super::render_with_layout(
                 &tent::html!(
                     article
@@ -94,6 +97,7 @@ impl Session {
             .unwrap_or_else(|e| {
                 http::Response::new_html(
                     200,
+                    vec![String::from("SID=1234")],
                     &super::render_with_layout(
                         &tent::html!(
                             article

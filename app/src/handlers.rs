@@ -3,6 +3,7 @@ use hideout::http::Response;
 pub fn not_found(uri: &str) -> Response {
     Response::new_html(
         404,
+        vec![],
         &tent::html!(
             html
                 head

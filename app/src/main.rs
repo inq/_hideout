@@ -22,10 +22,7 @@ fn unwrap_response(response: http::Result<http::Response>) -> http::Response {
     }
 }
 
-async fn process(
-    context: hideout::model::Context,
-    mut stream: TcpStream,
-) -> Result<(), failure::Error> {
+async fn process(context: app::Context, mut stream: TcpStream) -> Result<(), failure::Error> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     let buffer = prepare_buffer(&mut stream).await?;
@@ -40,7 +37,7 @@ async fn process(
             .take((content_length - offset) as u64)
             .read_to_end(&mut payload)
             .await?;
-        assert!(len == content_length);
+        assert!(len == content_length, "{}, {}", content_length, len);
         payload
     } else {
         vec![]
@@ -61,7 +58,7 @@ async fn _main() -> Result<(), failure::Error> {
     log::set_max_level(log::LevelFilter::Debug);
 
     let config = hideout::util::Config::from_file("config/config.yaml")?;
-    let context = hideout::model::Context::new(config).await?;
+    let context = app::Context::new(config).await?;
 
     let addr = (std::net::Ipv4Addr::new(127, 0, 0, 1), 8080);
     log::info!("Listening on: {:?}", addr);

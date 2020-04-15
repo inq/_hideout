@@ -1,4 +1,5 @@
-use hideout::{http, model::Context};
+use crate::Context;
+use hideout::http;
 
 pub struct Root {}
 
@@ -35,6 +36,7 @@ impl Root {
             deserunt mollit anim id est laborum."#;
         http::Response::new_html(
             200,
+            vec![],
             &super::render_with_layout(
                 &tent::html!(
                     article
@@ -52,6 +54,7 @@ impl Root {
     fn stylesheet() -> http::Response {
         http::Response::new_html(
             200,
+            vec![],
             &tent::css!(
                 @fontFace
                     fontFamily: "Raleway"

@@ -2,6 +2,6 @@
 
 #[macro_use]
 extern crate failure;
+pub mod context;
 pub mod http;
-pub mod model;
 pub mod util;
