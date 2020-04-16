@@ -1,4 +1,4 @@
-#![feature(or_patterns, proc_macro_hygiene, ptr_offset_from)]
+#![feature(or_patterns, proc_macro_hygiene, ptr_offset_from, try_blocks)]
 
 #[macro_use]
 extern crate failure;

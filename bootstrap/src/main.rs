@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate failure;
 mod fixture;
 
 use hideout::util::{Config, Logger};
@@ -10,11 +12,17 @@ fn parse_fixture() -> Result<fixture::Fixture, failure::Error> {
     Ok(res)
 }
 
+#[derive(Debug, Fail)]
+enum Error {
+    #[fail(display = "set_logger error")]
+    SetLogger,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), failure::Error> {
     // Log
     color_backtrace::install();
-    log::set_logger(&Logger).unwrap();
+    log::set_logger(&Logger).map_err(|_| Error::SetLogger)?;
     log::set_max_level(log::LevelFilter::Debug);
 
     // Config

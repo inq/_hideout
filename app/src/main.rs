@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate failure;
 use bytes::Bytes;
 use hideout::{http, util::Logger};
 use tokio::net::{TcpListener, TcpStream};
@@ -50,11 +52,19 @@ async fn process(context: app::Context, mut stream: TcpStream) -> Result<(), fai
     Ok(())
 }
 
+#[derive(Debug, Fail)]
+enum Error {
+    #[fail(display = "set_logger error")]
+    SetLogger,
+    #[fail(display = "stream exhausted")]
+    StreamExhausted,
+}
+
 async fn _main() -> Result<(), failure::Error> {
     use tokio::stream::StreamExt;
 
     color_backtrace::install();
-    log::set_logger(&Logger).unwrap();
+    log::set_logger(&Logger).map_err(|_| Error::SetLogger)?;
     log::set_max_level(log::LevelFilter::Debug);
 
     let config = hideout::util::Config::from_file("config/config.yaml")?;
@@ -67,13 +77,13 @@ async fn _main() -> Result<(), failure::Error> {
     let mut incoming = listener.incoming();
 
     loop {
-        let stream = incoming.next().await.unwrap()?;
+        let stream = incoming.next().await.ok_or(Error::StreamExhausted)??;
         tokio::task::spawn_local(process(context.clone(), stream));
     }
 }
 
 fn main() -> Result<(), failure::Error> {
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    let mut rt = tokio::runtime::Runtime::new()?;
     tokio::task::LocalSet::new().block_on(&mut rt, _main())?;
 
     Ok(())

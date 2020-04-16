@@ -23,18 +23,16 @@ impl Log for Logger {
                 Level::Error => "ERROR",
                 Level::Trace => "TRACE",
             };
-            eprintln!(
-                "\x1b[38;2;{}m{} {} {:42}  {}\x1b[0m",
-                color,
-                chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S"),
-                level,
-                format!(
-                    "{} ({})",
-                    record.module_path().unwrap(),
-                    record.line().unwrap()
-                ),
-                record.args()
-            );
+            let _: Option<()> = try {
+                eprintln!(
+                    "\x1b[38;2;{}m{} {} {:42}  {}\x1b[0m",
+                    color,
+                    chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S"),
+                    level,
+                    format!("{} ({})", record.module_path()?, record.line()?,),
+                    record.args()
+                );
+            };
         }
     }
 

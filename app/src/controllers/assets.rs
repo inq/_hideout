@@ -4,7 +4,7 @@ pub(super) struct Assets {}
 lazy_static::lazy_static! {
     static ref STORE: AssetStore = {
         let mut asset_store = AssetStore::new();
-        asset_store.add("assets/raleway-light.woff", "font/woff").unwrap();
+        assert!(asset_store.add("assets/raleway-light.woff", "font/woff").is_ok());
         asset_store
     };
 }

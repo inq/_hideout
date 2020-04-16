@@ -10,6 +10,8 @@ enum Error {
     InvalidPayload,
     #[fail(display = "invalid credential")]
     InvalidCredential,
+    #[fail(display = "database error: {}", 0)]
+    Database(tokio_postgres::Error),
 }
 
 impl Session {
@@ -71,7 +73,7 @@ impl Session {
                 &[email, &password_hashed],
             )
             .await
-            .unwrap();
+            .map_err(Error::Database)?;
 
         if rows.len() != 1 {
             return Err(Error::InvalidCredential);

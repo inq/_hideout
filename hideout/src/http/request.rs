@@ -6,6 +6,14 @@ use std::fmt::{self, Debug};
 pub enum Error {
     #[fail(display = "invalid value: {}", value)]
     ValueError { value: String },
+    #[fail(display = "httparse error")]
+    Httparse,
+    #[fail(display = "invalid http method")]
+    HttpMethod,
+    #[fail(display = "invalid http path")]
+    HttpPath,
+    #[fail(display = "invalid http version")]
+    HttpVersion,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -68,17 +76,18 @@ impl RequestLine {
     pub fn from_parsed(buffer: &Bytes, parsed: &httparse::Request) -> Result<Self, failure::Error> {
         use std::str::FromStr;
 
-        let method = Method::from_str(parsed.method.unwrap())?;
+        let method = Method::from_str(parsed.method.ok_or(Error::HttpMethod)?)?;
 
         let uri = {
             use crate::util::RcString;
             use std::convert::TryFrom;
 
-            let rc_string =
-                RcString::from_utf8_unsafe(buffer.slice_ref(parsed.path.unwrap().as_bytes()));
+            let rc_string = RcString::from_utf8_unsafe(
+                buffer.slice_ref(parsed.path.ok_or(Error::HttpMethod)?.as_bytes()),
+            );
             Uri::try_from(rc_string)?
         };
-        let version = parsed.version.unwrap().into();
+        let version = parsed.version.ok_or(Error::HttpVersion)?.into();
 
         Ok(Self {
             method,
@@ -138,7 +147,11 @@ impl Request {
     pub fn parse(buffer: Bytes) -> Result<Request, failure::Error> {
         let mut headers = [httparse::EMPTY_HEADER; 32];
         let mut req = httparse::Request::new(&mut headers);
-        let len = req.parse(&buffer)?.unwrap();
+        let len = if let httparse::Status::Complete(len) = req.parse(&buffer)? {
+            len
+        } else {
+            return Err(Error::Httparse.into());
+        };
         let request_line = RequestLine::from_parsed(&buffer, &req)?;
         let headers = req
             .headers

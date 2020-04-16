@@ -123,9 +123,12 @@ mod tests {
     fn it_works() {
         use std::convert::TryFrom;
 
-        let bytes = bytes::Bytes::from_static(b"/hello/world?param=?&?=?#fragment=#123");
-        let rc_string = RcString::from_utf8(bytes).unwrap();
-        let uri = Uri::try_from(rc_string).unwrap();
-        assert!(matches!(uri.fragment, Some(fragment) if fragment.as_ref() == "fragment=#123"));
+        let res: Result<(), failure::Error> = try {
+            let bytes = bytes::Bytes::from_static(b"/hello/world?param=?&?=?#fragment=#123");
+            let rc_string = RcString::from_utf8(bytes)?;
+            let uri = Uri::try_from(rc_string)?;
+            assert!(matches!(uri.fragment, Some(fragment) if fragment.as_ref() == "fragment=#123"));
+        };
+        assert!(res.is_ok());
     }
 }

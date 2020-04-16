@@ -11,6 +11,14 @@ pub struct AssetStore {
     inner: HashMap<String, Asset>,
 }
 
+#[derive(Debug, Fail)]
+pub enum Error {
+    #[fail(display = "invalid filename")]
+    Filename,
+    #[fail(display = "invalid unicode")]
+    Unicode,
+}
+
 impl AssetStore {
     pub fn new() -> Self {
         Self::default()
@@ -21,13 +29,12 @@ impl AssetStore {
         path: P,
         content_type: &str,
     ) -> Result<(), failure::Error> {
-        // TODO: Remove unwraps
         let key = path
             .as_ref()
             .file_name()
-            .unwrap()
+            .ok_or(Error::Filename)?
             .to_str()
-            .unwrap()
+            .ok_or(Error::Unicode)?
             .to_string();
         let buf = std::fs::read(path)?;
         self.inner.insert(
