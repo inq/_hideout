@@ -5,6 +5,7 @@ use std::rc::Rc;
 pub struct Context<T> {
     pub db: Rc<tokio_postgres::Client>,
     pub session: SessionStore<T>,
+    pub rng: rand::rngs::ThreadRng,
 }
 
 impl<T> std::clone::Clone for Context<T> {
@@ -12,6 +13,7 @@ impl<T> std::clone::Clone for Context<T> {
         Self {
             db: self.db.clone(),
             session: self.session.clone(),
+            rng: self.rng,
         }
     }
 }
@@ -30,6 +32,7 @@ impl<T> Context<T> {
         Ok(Self {
             db: Rc::new(client),
             session: SessionStore::<T>::new(),
+            rng: rand::thread_rng(),
         })
     }
 }

@@ -437,6 +437,7 @@ dependencies = [
  "futures",
  "httparse",
  "log",
+ "rand",
  "serde",
  "serde_yaml",
  "sha2",

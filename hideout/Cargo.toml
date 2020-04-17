@@ -11,6 +11,7 @@ failure = "*"
 futures = "*"
 httparse = "*"
 log = "*"
+rand = "*"
 serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
 sha2 = "*"
