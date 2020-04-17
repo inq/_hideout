@@ -41,4 +41,12 @@ impl<S> Context<S> {
         self.sessions.set(&key, session);
         key
     }
+
+    pub fn get_session(&self, key: &str) -> Option<S>
+    where
+        S: Clone,
+    {
+        // TODO: Clean up
+        self.sessions.get(&session_store::Key::new(key.to_string()))
+    }
 }

@@ -33,7 +33,7 @@ impl Users {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct User {
     id: Uuid,
     email: String, // TODO: Use Bytes

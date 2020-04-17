@@ -1,5 +1,6 @@
 use crate::models::User;
 
+#[derive(Debug, Clone)]
 pub struct Session {
     user: User,
 }

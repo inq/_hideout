@@ -72,11 +72,12 @@ impl<T> SessionStore<T> {
             .insert(key.as_ref().clone(), value)
     }
 
-    pub(super) fn get<Q>(&self, key: &Q)
+    pub(super) fn get<Q>(&self, key: &Q) -> Option<T>
     where
         Key: Borrow<Q>,
         Q: Hash + Eq,
+        T: Clone,
     {
-        self.inner.borrow_mut().map.get(key);
+        self.inner.as_ref().borrow().map.get(key).cloned()
     }
 }

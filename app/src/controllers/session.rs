@@ -78,11 +78,11 @@ impl Session {
 
             http::Response::new_html(
                 200,
-                vec![],
+                vec![format!("SID={}; Path=/", key.as_ref())],
                 &super::render_with_layout(
                     &tent::html!(
                         article
-                            {format!("Hello, {:?}", key)}
+                            "Session created."
                     )
                     .to_string(),
                 ),
@@ -93,7 +93,7 @@ impl Session {
             // TODO: Implement redirection & go back to login form
             http::Response::new_html(
                 200,
-                vec![String::from("SID=1234")],
+                vec![],
                 &super::render_with_layout(
                     &tent::html!(
                         article

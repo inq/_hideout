@@ -1,9 +1,11 @@
+mod cookie;
 mod form_data;
 mod request;
 mod response;
 mod status;
 mod uri;
 
+pub use cookie::Cookie;
 pub use form_data::FormData;
 pub use request::{Method, Request};
 pub use response::Response;

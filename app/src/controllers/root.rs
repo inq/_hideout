@@ -11,7 +11,7 @@ impl Root {
         idx: usize,
     ) -> http::Result<http::Response> {
         match request.uri().nth_path(idx) {
-            None => Ok(Self::index()),
+            None => Ok(Self::index(context, request)),
             Some("articles") => {
                 super::Articles::serve_inner(request, context, payload, idx + 1).await
             }
@@ -26,7 +26,19 @@ impl Root {
         }
     }
 
-    fn index() -> http::Response {
+    fn index(context: Context, request: http::Request) -> http::Response {
+        let cookie = request.cookie();
+
+        // TODO: Utilize globally
+        let email = if let Some(session) = cookie
+            .get("SID")
+            .and_then(|sid| context.get_session(sid.as_ref()))
+        {
+            session.email().to_owned()
+        } else {
+            "".to_owned()
+        };
+
         let content = r#"
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
             incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
@@ -41,6 +53,9 @@ impl Root {
                 &tent::html!(
                     article
                         header
+                            h2
+                                "Hello, "
+                                {email}
                             h1
                                 "Lorem ipsum"
                             p

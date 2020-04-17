@@ -1,4 +1,7 @@
-use crate::http::Uri;
+use crate::{
+    http::{Cookie, Uri},
+    util::RcString,
+};
 use bytes::Bytes;
 use std::fmt::{self, Debug};
 
@@ -79,7 +82,6 @@ impl RequestLine {
         let method = Method::from_str(parsed.method.ok_or(Error::HttpMethod)?)?;
 
         let uri = {
-            use crate::util::RcString;
             use std::convert::TryFrom;
 
             let rc_string = RcString::from_utf8_unsafe(
@@ -107,19 +109,6 @@ impl Debug for RequestLine {
     }
 }
 
-fn slice_to_bytes(buffer: &Bytes, slice: &[u8]) -> Bytes {
-    let boundary = unsafe {
-        buffer
-            .as_ptr()
-            .add(buffer.len())
-            .offset_from(slice.as_ptr().add(slice.len()))
-    };
-    let offset = unsafe { slice.as_ptr().offset_from(buffer.as_ptr()) };
-    assert!(offset >= 0 && boundary >= 0, "{}, {}", offset, boundary);
-    let offset = offset as usize;
-    buffer.slice(offset..offset + slice.len())
-}
-
 #[derive(Debug)]
 pub struct Request {
     request_line: RequestLine,
@@ -128,18 +117,13 @@ pub struct Request {
 }
 
 pub struct Header {
-    name: Bytes,
-    value: Bytes,
+    name: RcString,
+    value: RcString,
 }
 
 impl Debug for Header {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{:?}: {:?}",
-            std::str::from_utf8(&self.name).or(Err(fmt::Error))?,
-            std::str::from_utf8(&self.value).or(Err(fmt::Error))?,
-        )
+        write!(f, "{}: {}", self.name.as_ref(), self.value.as_ref(),)
     }
 }
 
@@ -156,11 +140,13 @@ impl Request {
         let headers = req
             .headers
             .iter()
-            .map(|header| Header {
-                name: slice_to_bytes(&buffer, header.name.as_bytes()),
-                value: slice_to_bytes(&buffer, header.value),
+            .map(|header| -> Result<Header, failure::Error> {
+                Ok(Header {
+                    name: RcString::from_utf8_unsafe(buffer.slice_ref(header.name.as_bytes())),
+                    value: RcString::from_utf8(buffer.slice_ref(header.value))?,
+                })
             })
-            .collect();
+            .collect::<Result<_, _>>()?;
         Ok(Request {
             request_line,
             headers,
@@ -168,12 +154,20 @@ impl Request {
         })
     }
 
+    pub fn cookie(&self) -> Cookie {
+        let cookies_raw = self
+            .headers
+            .iter()
+            .filter(|header| header.name.as_ref() == "Cookie")
+            .map(|header| header.value.clone())
+            .collect();
+        Cookie::new(cookies_raw)
+    }
+
     pub fn content_length(&self) -> Option<usize> {
         for header in self.headers.iter() {
-            if header.name.as_ref() == b"Content-Length" {
-                return std::str::from_utf8(&header.value)
-                    .ok()
-                    .and_then(|s| s.parse().ok());
+            if header.name.as_ref() == "Content-Length" {
+                return header.value.as_ref().parse().ok();
             }
         }
         None
