@@ -10,8 +10,6 @@ enum Error {
     InvalidPayload,
     #[fail(display = "invalid credential")]
     InvalidCredential,
-    #[fail(display = "database error: {}", 0)]
-    Database(tokio_postgres::Error),
 }
 
 impl Session {
@@ -58,27 +56,19 @@ impl Session {
 
     async fn create_inner(context: Context, payload: &[u8]) -> Result<http::Response, Error> {
         use hideout::http::FormData;
-        use hideout::util::Password;
+
+        let model = crate::models::Model::from_context(context);
 
         let form_data =
             FormData::parse_x_www_form_urlencoded(payload).map_err(|_| Error::InvalidPayload)?;
         let email = form_data.get("email").ok_or(Error::InvalidPayload)?;
-        let password_hashed =
-            Password::new(&form_data.get("password").ok_or(Error::InvalidPayload)?).hashed();
+        let password = form_data.get("password").ok_or(Error::InvalidPayload)?;
 
-        let rows = context
-            .db
-            .query(
-                "SELECT * FROM users WHERE email=$1 AND password_hashed=$2",
-                &[email, &password_hashed],
-            )
+        let user = model
+            .users()
+            .auth(email, password)
             .await
-            .map_err(Error::Database)?;
-
-        if rows.len() != 1 {
-            return Err(Error::InvalidCredential);
-        }
-        let row = &rows[0];
+            .ok_or(Error::InvalidCredential)?;
 
         Ok(http::Response::new_html(
             200,
@@ -86,7 +76,7 @@ impl Session {
             &super::render_with_layout(
                 &tent::html!(
                     article
-                        {format!("Hello, {:?}", row.get::<_, String>(1))}
+                        {format!("Hello, {:?}", user)}
                 )
                 .to_string(),
             ),
