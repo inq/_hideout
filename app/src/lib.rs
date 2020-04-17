@@ -1,4 +1,4 @@
-#![feature(proc_macro_hygiene)]
+#![feature(proc_macro_hygiene, try_blocks)]
 
 pub mod controllers;
 pub mod handlers;

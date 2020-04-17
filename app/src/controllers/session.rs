@@ -54,50 +54,49 @@ impl Session {
         )
     }
 
-    async fn create_inner(context: Context, payload: &[u8]) -> Result<http::Response, Error> {
-        use hideout::http::FormData;
-
-        let model = crate::models::Model::from_context(context);
-
-        let form_data =
-            FormData::parse_x_www_form_urlencoded(payload).map_err(|_| Error::InvalidPayload)?;
-        let email = form_data.get("email").ok_or(Error::InvalidPayload)?;
-        let password = form_data.get("password").ok_or(Error::InvalidPayload)?;
-
-        let user = model
-            .users()
-            .auth(email, password)
-            .await
-            .ok_or(Error::InvalidCredential)?;
-
-        Ok(http::Response::new_html(
-            200,
-            vec![],
-            &super::render_with_layout(
-                &tent::html!(
-                    article
-                        {format!("Hello, {:?}", user)}
-                )
-                .to_string(),
-            ),
-        ))
-    }
-
     async fn create(context: Context, payload: &[u8]) -> http::Response {
-        Self::create_inner(context, payload)
-            .await
-            .unwrap_or_else(|e| {
-                http::Response::new_html(
-                    200,
-                    vec![String::from("SID=1234")],
-                    &super::render_with_layout(
-                        &tent::html!(
-                            article
-                                {format!("{:?}", e)}
-                        )
-                        .to_string(),
-                    ),
-                )
-            })
+        let inner: Result<http::Response, Error> = try {
+            use hideout::http::FormData;
+
+            let model = crate::models::Model::from_context(context);
+
+            let form_data = FormData::parse_x_www_form_urlencoded(payload)
+                .map_err(|_| Error::InvalidPayload)?;
+            let email = form_data.get("email").ok_or(Error::InvalidPayload)?;
+            let password = form_data.get("password").ok_or(Error::InvalidPayload)?;
+
+            let user = model
+                .users()
+                .auth(email, password)
+                .await
+                .ok_or(Error::InvalidCredential)?;
+
+            http::Response::new_html(
+                200,
+                vec![],
+                &super::render_with_layout(
+                    &tent::html!(
+                        article
+                            {format!("Hello, {:?}", user)}
+                    )
+                    .to_string(),
+                ),
+            )
+        };
+
+        inner.unwrap_or_else(|e| {
+            // TODO: Implement redirection & go back to login form
+            http::Response::new_html(
+                200,
+                vec![String::from("SID=1234")],
+                &super::render_with_layout(
+                    &tent::html!(
+                        article
+                            {format!("{:?}", e)}
+                    )
+                    .to_string(),
+                ),
+            )
+        })
     }
 }
