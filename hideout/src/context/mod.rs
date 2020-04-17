@@ -2,23 +2,23 @@ pub mod session_store;
 use session_store::SessionStore;
 use std::rc::Rc;
 
-pub struct Context<T> {
+pub struct Context<S> {
     pub db: Rc<tokio_postgres::Client>,
-    pub session: SessionStore<T>,
-    pub rng: rand::rngs::ThreadRng,
+    rng: rand::rngs::ThreadRng,
+    sessions: SessionStore<S>,
 }
 
-impl<T> std::clone::Clone for Context<T> {
+impl<S> std::clone::Clone for Context<S> {
     fn clone(&self) -> Self {
         Self {
             db: self.db.clone(),
-            session: self.session.clone(),
+            sessions: self.sessions.clone(),
             rng: self.rng,
         }
     }
 }
 
-impl<T> Context<T> {
+impl<S> Context<S> {
     pub async fn new(config: crate::util::Config) -> Result<Self, failure::Error> {
         let (client, connection) =
             tokio_postgres::connect(&config.database_string(), tokio_postgres::NoTls).await?;
@@ -31,8 +31,14 @@ impl<T> Context<T> {
 
         Ok(Self {
             db: Rc::new(client),
-            session: SessionStore::<T>::new(),
+            sessions: SessionStore::<S>::new(),
             rng: rand::thread_rng(),
         })
+    }
+
+    pub fn add_session(&mut self, session: S) -> session_store::Key {
+        let key = session_store::Key::new(crate::util::Uuid::new_v4(&mut self.rng).to_string());
+        self.sessions.set(&key, session);
+        key
     }
 }

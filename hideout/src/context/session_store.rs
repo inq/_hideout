@@ -2,18 +2,24 @@ use std::{
     borrow::Borrow, cell::RefCell, collections::HashMap, convert::AsRef, hash::Hash, rc::Rc,
 };
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Key(String);
 
 impl Key {
-    pub fn new(inner: &str) -> Self {
-        Self(inner.to_string())
+    pub fn new(inner: String) -> Self {
+        Self(inner)
     }
 }
 
 impl AsRef<str> for Key {
     fn as_ref(&self) -> &str {
         &self.0
+    }
+}
+
+impl AsRef<Key> for &Key {
+    fn as_ref(&self) -> &Key {
+        &self
     }
 }
 
@@ -48,7 +54,7 @@ impl<T> Default for SessionStore<T> {
 }
 
 impl<T> SessionStore<T> {
-    pub fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self {
             inner: Rc::new(RefCell::new(Inner {
                 map: HashMap::default(),
@@ -56,7 +62,7 @@ impl<T> SessionStore<T> {
         }
     }
 
-    pub fn set<K>(&self, key: K, value: T) -> Option<T>
+    pub(super) fn set<K>(&self, key: K, value: T) -> Option<T>
     where
         K: AsRef<Key>,
     {
@@ -66,7 +72,7 @@ impl<T> SessionStore<T> {
             .insert(key.as_ref().clone(), value)
     }
 
-    pub fn get<Q>(&self, key: &Q)
+    pub(super) fn get<Q>(&self, key: &Q)
     where
         Key: Borrow<Q>,
         Q: Hash + Eq,

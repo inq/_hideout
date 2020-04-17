@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::{models, Context};
 use failure::Fail;
 use hideout::http;
 
@@ -54,22 +54,27 @@ impl Session {
         )
     }
 
-    async fn create(context: Context, payload: &[u8]) -> http::Response {
+    async fn create(mut context: Context, payload: &[u8]) -> http::Response {
         let inner: Result<http::Response, Error> = try {
             use hideout::http::FormData;
 
-            let model = crate::models::Model::from_context(context);
+            let model = crate::models::Model::from_context(context.clone());
 
             let form_data = FormData::parse_x_www_form_urlencoded(payload)
                 .map_err(|_| Error::InvalidPayload)?;
             let email = form_data.get("email").ok_or(Error::InvalidPayload)?;
             let password = form_data.get("password").ok_or(Error::InvalidPayload)?;
 
-            let user = model
-                .users()
-                .auth(email, password)
-                .await
-                .ok_or(Error::InvalidCredential)?;
+            let session = {
+                let user = model
+                    .users()
+                    .auth(email, password)
+                    .await
+                    .ok_or(Error::InvalidCredential)?;
+
+                models::Session::new(user)
+            };
+            let key = context.add_session(session);
 
             http::Response::new_html(
                 200,
@@ -77,7 +82,7 @@ impl Session {
                 &super::render_with_layout(
                     &tent::html!(
                         article
-                            {format!("Hello, {:?}", user)}
+                            {format!("Hello, {:?}", key)}
                     )
                     .to_string(),
                 ),
