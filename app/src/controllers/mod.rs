@@ -8,7 +8,12 @@ pub(self) use assets::Assets;
 pub use root::Root;
 pub(self) use session::Session;
 
-pub(self) fn render_with_layout(inner: &str) -> String {
+pub(self) fn render_with_layout(context: &crate::Context, inner: &str) -> String {
+    let email = context
+        .session
+        .as_ref()
+        .map(|session| session.email().to_string());
+
     let path_data = vec![
         "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01",
         "-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 ",
@@ -27,8 +32,18 @@ pub(self) fn render_with_layout(inner: &str) -> String {
             body
                 header id="mainHeader"
                     nav
-                        a href="/session/new"
-                            "Sign in"
+                        {
+                            if let Some(email) = email {
+                                tent::html!(
+                                    {email}
+                                )
+                            } else {
+                                tent::html!(
+                                    a href="/session/new"
+                                        "Sign in"
+                                )
+                            }
+                        }
                     p
                         "inkyu"
                         span.smRed

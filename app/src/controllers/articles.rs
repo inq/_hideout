@@ -21,11 +21,12 @@ impl Articles {
         }
     }
 
-    fn show(_context: Context, article_id: &str) -> http::Response {
+    fn show(context: Context, article_id: &str) -> http::Response {
         http::Response::new_html(
             200,
             vec![],
             &super::render_with_layout(
+                &context,
                 &tent::html!(
                     article
                         span.label {format!("Show Article: {}", article_id)}
@@ -35,11 +36,12 @@ impl Articles {
         )
     }
 
-    fn list(_context: Context) -> http::Response {
+    fn list(context: Context) -> http::Response {
         http::Response::new_html(
             200,
             vec![],
             &super::render_with_layout(
+                &context,
                 &tent::html!(
                     article
                         span.label "List of articles"

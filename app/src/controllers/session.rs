@@ -20,7 +20,7 @@ impl Session {
     ) -> http::Result<http::Response> {
         if let Some(path) = context.request.uri().nth_path(idx) {
             match path.as_ref() {
-                "new" => Ok(Self::session_new()),
+                "new" => Ok(Self::session_new(context)),
                 "create" => Ok(Self::create(context, payload).await),
                 _ => Err(http::Error::NotFound {
                     uri: context.request.uri().as_ref().to_string(),
@@ -33,11 +33,12 @@ impl Session {
         }
     }
 
-    fn session_new() -> http::Response {
+    fn session_new(context: Context) -> http::Response {
         http::Response::new_html(
             200,
             vec![],
             &super::render_with_layout(
+                &context,
                 &tent::html!(
                     article
                         header
@@ -85,6 +86,7 @@ impl Session {
                 200,
                 vec![format!("SID={}; Path=/", key.as_ref())],
                 &super::render_with_layout(
+                    &context,
                     &tent::html!(
                         article
                             "Session created."
@@ -100,6 +102,7 @@ impl Session {
                 200,
                 vec![],
                 &super::render_with_layout(
+                    &context,
                     &tent::html!(
                         article
                             {format!("{:?}", e)}
