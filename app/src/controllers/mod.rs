@@ -45,9 +45,10 @@ pub(self) fn render_with_layout(context: &crate::Context, inner: &str) -> String
                             }
                         }
                     p
-                        "inkyu"
-                        span.smRed
-                            ".kr"
+                        a href="/"
+                            "inkyu"
+                            span.smRed
+                                ".kr"
                 {inner}
                 footer id="mainFooter"
                     "Inkyu © 2020 "

@@ -63,6 +63,9 @@ impl Root {
                     margin: "1em auto"
                     maxWidth: "900px"
                     fontFamily: "Raleway"
+                a
+                    color: "inherit"
+                    textDecoration: "none"
                 #mainHeader
                     nav
                         textAlign: "right"
