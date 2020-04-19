@@ -34,7 +34,7 @@ impl Session {
     }
 
     fn session_new(context: Context) -> http::Response {
-        http::Response::new_html(
+        http::Response::html(
             200,
             vec![],
             &super::render_with_layout(
@@ -82,23 +82,15 @@ impl Session {
             };
             let key = context.server_state.add_session(session);
 
-            http::Response::new_html(
-                200,
+            http::Response::redirect_to(
                 vec![format!("SID={}; Path=/", key.as_ref())],
-                &super::render_with_layout(
-                    &context,
-                    &tent::html!(
-                        article
-                            "Session created."
-                    )
-                    .to_string(),
-                ),
+                "/".to_string(),
             )
         };
 
         inner.unwrap_or_else(|e| {
             // TODO: Implement redirection & go back to login form
-            http::Response::new_html(
+            http::Response::html(
                 200,
                 vec![],
                 &super::render_with_layout(

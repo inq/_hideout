@@ -51,7 +51,7 @@ impl AssetStore {
         self.inner.get(key).map(|asset| {
             use crate::http::Response;
 
-            Response::new_binary(200, vec![], &asset.data, &asset.content_type)
+            Response::binary(200, vec![], &asset.data, &asset.content_type)
         })
     }
 }
