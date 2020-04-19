@@ -30,8 +30,8 @@ impl Uri {
         self.path.len()
     }
 
-    pub fn nth_path(&self, idx: usize) -> Option<&str> {
-        self.path.get(idx).map(std::convert::AsRef::as_ref)
+    pub fn nth_path(&self, idx: usize) -> Option<RcString> {
+        self.path.get(idx).cloned()
     }
 }
 

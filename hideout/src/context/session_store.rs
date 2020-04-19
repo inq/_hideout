@@ -32,7 +32,7 @@ impl<'a> AsRef<str> for KeyRef<'a> {
 }
 
 pub struct Inner<T> {
-    map: HashMap<Key, T>,
+    map: HashMap<Key, Rc<T>>,
 }
 
 pub struct SessionStore<T> {
@@ -62,21 +62,20 @@ impl<T> SessionStore<T> {
         }
     }
 
-    pub(super) fn set<K>(&self, key: K, value: T) -> Option<T>
+    pub(super) fn set<K>(&self, key: K, value: T) -> Option<Rc<T>>
     where
         K: AsRef<Key>,
     {
         self.inner
             .borrow_mut()
             .map
-            .insert(key.as_ref().clone(), value)
+            .insert(key.as_ref().clone(), Rc::new(value))
     }
 
-    pub(super) fn get<Q>(&self, key: &Q) -> Option<T>
+    pub(super) fn get<Q>(&self, key: &Q) -> Option<Rc<T>>
     where
         Key: Borrow<Q>,
         Q: Hash + Eq,
-        T: Clone,
     {
         self.inner.as_ref().borrow().map.get(key).cloned()
     }

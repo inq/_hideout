@@ -8,6 +8,7 @@ pub struct Cookie {
 
 impl Cookie {
     pub fn new(raw: Vec<RcString>) -> Self {
+        #[allow(clippy::mutable_key_type)]
         let mut inner = HashMap::new();
         for line in raw.iter() {
             for token in line.as_ref().split("; ") {

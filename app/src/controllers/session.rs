@@ -14,17 +14,22 @@ enum Error {
 
 impl Session {
     pub(super) async fn serve_inner(
-        request: http::Request,
         context: Context,
         payload: &[u8],
         idx: usize,
     ) -> http::Result<http::Response> {
-        match request.uri().nth_path(idx) {
-            Some("new") => Ok(Self::session_new()),
-            Some("create") => Ok(Self::create(context, payload).await),
-            _ => Err(http::Error::NotFound {
-                uri: request.uri().as_ref().to_string(),
-            }),
+        if let Some(path) = context.request.uri().nth_path(idx) {
+            match path.as_ref() {
+                "new" => Ok(Self::session_new()),
+                "create" => Ok(Self::create(context, payload).await),
+                _ => Err(http::Error::NotFound {
+                    uri: context.request.uri().as_ref().to_string(),
+                }),
+            }
+        } else {
+            Err(http::Error::NotFound {
+                uri: context.request.uri().as_ref().to_string(),
+            })
         }
     }
 
@@ -58,7 +63,7 @@ impl Session {
         let inner: Result<http::Response, Error> = try {
             use hideout::http::FormData;
 
-            let model = crate::models::Model::from_context(context.clone());
+            let model = crate::models::Model::from_context(&context);
 
             let form_data = FormData::parse_x_www_form_urlencoded(payload)
                 .map_err(|_| Error::InvalidPayload)?;
@@ -74,7 +79,7 @@ impl Session {
 
                 models::Session::new(user)
             };
-            let key = context.add_session(session);
+            let key = context.server_state.add_session(session);
 
             http::Response::new_html(
                 200,

@@ -24,15 +24,17 @@ fn unwrap_response(response: http::Result<http::Response>) -> http::Response {
     }
 }
 
-async fn process(context: app::Context, mut stream: TcpStream) -> Result<(), failure::Error> {
+async fn process(state: app::ServerState, mut stream: TcpStream) -> Result<(), failure::Error> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     let buffer = prepare_buffer(&mut stream).await?;
 
     let request = hideout::http::Request::parse(buffer)?;
-    let payload = if let Some(content_length) = request.content_length() {
+    let context = app::Context::new(state, request);
+
+    let payload = if let Some(content_length) = context.request.content_length() {
         let mut payload = Vec::with_capacity(content_length);
-        payload.extend_from_slice(&request.body);
+        payload.extend_from_slice(&context.request.body);
         let offset = payload.len();
         log::info!("Reading content: Content-Length: {}", content_length);
         let len = (&mut stream)
@@ -45,7 +47,7 @@ async fn process(context: app::Context, mut stream: TcpStream) -> Result<(), fai
         vec![]
     };
 
-    let response = app::controllers::Root::serve(request, context, &payload).await;
+    let response = app::controllers::Root::serve(context, &payload).await;
     let response = unwrap_response(response);
     stream.write(response.header.to_string().as_bytes()).await?;
     stream.write(&response.payload).await?;
@@ -68,7 +70,7 @@ async fn _main() -> Result<(), failure::Error> {
     log::set_max_level(log::LevelFilter::Debug);
 
     let config = hideout::util::Config::from_file("config/config.yaml")?;
-    let context = app::Context::new(config).await?;
+    let state = app::ServerState::new(config).await?;
 
     let addr = (std::net::Ipv4Addr::new(127, 0, 0, 1), 8080);
     log::info!("Listening on: {:?}", addr);
@@ -78,7 +80,7 @@ async fn _main() -> Result<(), failure::Error> {
 
     loop {
         let stream = incoming.next().await.ok_or(Error::StreamExhausted)??;
-        tokio::task::spawn_local(process(context.clone(), stream));
+        tokio::task::spawn_local(process(state.clone(), stream));
     }
 }
 

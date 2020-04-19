@@ -11,19 +11,20 @@ lazy_static::lazy_static! {
 
 impl Assets {
     pub(super) async fn serve_inner(
-        request: http::Request,
+        context: crate::Context,
         _payload: &[u8],
         idx: usize,
     ) -> http::Result<http::Response> {
-        if let (Some(resource), None) =
-            (request.uri().nth_path(idx), request.uri().nth_path(idx + 1))
-        {
-            if let Some(res) = STORE.serve(resource) {
+        if let (Some(resource), None) = (
+            context.request.uri().nth_path(idx),
+            context.request.uri().nth_path(idx + 1),
+        ) {
+            if let Some(res) = STORE.serve(&resource) {
                 return Ok(res);
             }
         }
         Err(http::Error::NotFound {
-            uri: request.uri().as_ref().to_string(),
+            uri: context.request.uri().as_ref().to_string(),
         })
     }
 }

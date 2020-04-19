@@ -1,4 +1,4 @@
-use std::{borrow, fmt, hash};
+use std::{borrow, fmt, hash, ops};
 
 #[derive(Clone)]
 pub struct RcString {
@@ -8,6 +8,15 @@ pub struct RcString {
 impl AsRef<str> for RcString {
     #[inline]
     fn as_ref(&self) -> &str {
+        unsafe { std::str::from_utf8_unchecked(&self.inner) }
+    }
+}
+
+impl ops::Deref for RcString {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &str {
         unsafe { std::str::from_utf8_unchecked(&self.inner) }
     }
 }

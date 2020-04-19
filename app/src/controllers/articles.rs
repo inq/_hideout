@@ -5,17 +5,19 @@ pub(super) struct Articles {}
 
 impl Articles {
     pub(super) async fn serve_inner(
-        request: http::Request,
         context: Context,
         _payload: &[u8],
         idx: usize,
     ) -> http::Result<http::Response> {
-        match request.uri().nth_path(idx) {
-            Some("list") => Ok(Self::list(context)),
-            Some(article_id) => Ok(Self::show(context, article_id)),
-            _ => Err(http::Error::NotFound {
-                uri: request.uri().as_ref().to_string(),
-            }),
+        if let Some(path) = context.request.uri().nth_path(idx) {
+            match path.as_ref() {
+                "list" => Ok(Self::list(context)),
+                article_id => Ok(Self::show(context, article_id)),
+            }
+        } else {
+            Err(http::Error::NotFound {
+                uri: context.request.uri().as_ref().to_string(),
+            })
         }
     }
 

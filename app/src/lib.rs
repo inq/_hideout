@@ -5,3 +5,4 @@ pub mod handlers;
 pub mod models;
 
 pub type Context = hideout::context::Context<models::Session>;
+pub type ServerState = hideout::context::ServerState<models::Session>;

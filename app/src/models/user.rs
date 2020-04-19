@@ -1,7 +1,8 @@
+use std::rc::Rc;
 use uuid::Uuid;
 
 pub struct Users {
-    pub(super) context: crate::Context,
+    pub(super) db: Rc<tokio_postgres::Client>,
 }
 
 impl Users {
@@ -11,7 +12,6 @@ impl Users {
         let password_hashed = Password::new(password).hashed();
 
         let rows = self
-            .context
             .db
             .query(
                 "SELECT * FROM users WHERE email=$1 AND password_hashed=$2",

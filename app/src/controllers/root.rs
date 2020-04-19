@@ -5,34 +5,32 @@ pub struct Root {}
 
 impl Root {
     pub(super) async fn serve_inner(
-        request: http::Request,
         context: Context,
         payload: &[u8],
         idx: usize,
     ) -> http::Result<http::Response> {
-        match request.uri().nth_path(idx) {
-            None => Ok(Self::index(context, request)),
-            Some("articles") => {
-                super::Articles::serve_inner(request, context, payload, idx + 1).await
+        if let Some(path) = context.request.uri().nth_path(idx) {
+            match path.as_ref() {
+                "articles" => super::Articles::serve_inner(context, payload, idx + 1).await,
+                "assets" => super::Assets::serve_inner(context, payload, idx + 1).await,
+                "session" => super::Session::serve_inner(context, payload, idx + 1).await,
+                "main.css" => Ok(Self::stylesheet()),
+                _ => Err(http::Error::NotFound {
+                    uri: context.request.uri().as_ref().to_string(),
+                }),
             }
-            Some("assets") => super::Assets::serve_inner(request, payload, idx + 1).await,
-            Some("session") => {
-                super::Session::serve_inner(request, context, payload, idx + 1).await
-            }
-            Some("main.css") => Ok(Self::stylesheet()),
-            _ => Err(http::Error::NotFound {
-                uri: request.uri().as_ref().to_string(),
-            }),
+        } else {
+            Ok(Self::index(context))
         }
     }
 
-    fn index(context: Context, request: http::Request) -> http::Response {
-        let cookie = request.cookie();
+    fn index(context: Context) -> http::Response {
+        let cookie = context.request.cookie();
 
         // TODO: Utilize globally
         let email = if let Some(session) = cookie
             .get("SID")
-            .and_then(|sid| context.get_session(sid.as_ref()))
+            .and_then(|sid| context.server_state.get_session(sid.as_ref()))
         {
             session.email().to_owned()
         } else {
@@ -53,11 +51,9 @@ impl Root {
                 &tent::html!(
                     article
                         header
-                            h2
-                                "Hello, "
-                                {email}
                             h1
                                 "Lorem ipsum"
+                                {email}
                             p
                                 {content}
                 )
@@ -130,11 +126,7 @@ impl Root {
         )
     }
 
-    pub async fn serve(
-        request: http::Request,
-        context: Context,
-        payload: &[u8],
-    ) -> http::Result<http::Response> {
-        Self::serve_inner(request, context, payload, 0).await
+    pub async fn serve(context: Context, payload: &[u8]) -> http::Result<http::Response> {
+        Self::serve_inner(context, payload, 0).await
     }
 }
