@@ -40,20 +40,14 @@ impl Session {
             &super::render_with_layout(
                 &context,
                 &tent::html!(
-                    article
+                    article.signin
                         header
                             h1
                                 "Signin"
                         form action="/session/create" method="POST"
-                            ul
-                                li.input
-                                    label for="email" "email"
-                                    input type="text" name="email"
-                                li.input
-                                    label for="password" "password"
-                                    input type="password" name="password"
-                                li.submit
-                                    input type="submit"
+                            input type="text" name="email" placeholder="email"
+                            input type="password" name="password" placeholder="password"
+                            input type="submit"
                 )
                 .to_string(),
             ),

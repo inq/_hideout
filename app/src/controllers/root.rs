@@ -51,6 +51,7 @@ impl Root {
     }
 
     fn stylesheet() -> http::Response {
+        // TODO: Process article.signin correctly
         http::Response::html(
             200,
             vec![],
@@ -93,25 +94,25 @@ impl Root {
                     .content
                         fontSize: "0.5em"
                         lineHeight: "1.5em"
+                .signin
+                    h1
+                        color: "#666666"
+                        textAlign: "center"
+                    margin: "20px auto"
+                    padding: "10px"
+                    width: "50%"
+                    backgroundColor: "#f0f0f0"
                 article
-                    form
-                        width: "50%"
-                        ul
-                            .input
-                                display: "flex"
-                                padding: "0.2em"
-                                label
-                                    flex: "5 2"
-                                    textAlign: "right"
-                                    paddingRight: "2em"
-                                input
-                                    flex: "5 3"
-                            .submit
-                                paddingLeft: "80%"
-                                input
-                                    height: "2em"
                     input
                         display: "block"
+                        width: "80%"
+                        height: "3em"
+                        lineHeight: "2em"
+                        margin: "1em auto"
+                        boxSizing: "border-box"
+                        padding: "0 2em"
+                        border: "1px solid #dddddd"
+                        borderRadius: "0.5em"
             )
             .to_string(),
         )
