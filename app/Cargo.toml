@@ -5,18 +5,23 @@ authors = ["inkyu <gofiri@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+bson = "*"
 bytes = "*"
 color-backtrace = { version = "*", features = ["failure-bt"] }
 failure = "*"
 hideout = { path = "../hideout" }
 lazy_static = "*"
 log = "*"
+serde = "*"
 tent = "*"
 uuid = "*"
 tokio = { version = "*", features = ["io-util", "rt-core", "rt-util", "stream", "tcp"] }
-tokio-postgres = { version = "*", features = ["with-uuid-0_8"] }
-postgres-types = { version = "*", features = ["derive"] }
 
+[dependencies.mongodb]
+version = "*"
+default-features = false
+features = ["tokio-runtime"]
 
 [dev-dependencies]
 tokio = { version = "*", features = ["io-util", "macros", "rt-core", "rt-util", "stream", "tcp"] }
+futures = "*"

@@ -8,10 +8,8 @@ pub struct Config {
 
 #[derive(Deserialize, Debug)]
 pub struct Database {
-    host: String,
-    user: String,
-    password: String,
-    dbname: String,
+    uri: String,
+    db_name: String,
 }
 
 impl Config {
@@ -21,11 +19,11 @@ impl Config {
         Ok(res)
     }
 
-    pub fn database_string(&self) -> String {
-        // TODO: Implement host
-        format!(
-            "host={} user={} password='{}' dbname={}",
-            self.database.host, self.database.user, self.database.password, self.database.dbname
-        )
+    pub fn db_uri(&self) -> &str {
+        &self.database.uri
+    }
+
+    pub fn db_name(&self) -> &str {
+        &self.database.db_name
     }
 }

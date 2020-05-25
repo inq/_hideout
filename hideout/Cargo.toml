@@ -16,7 +16,11 @@ serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
 sha2 = "*"
 tokio = { version = "*", features = ["io-util", "rt-core", "rt-util", "stream", "tcp"] }
-tokio-postgres = "*"
+
+[dependencies.mongodb]
+version = "*"
+default-features = false
+features = ["tokio-runtime"]
 
 [dev-dependencies]
 tokio = { version = "*", features = ["io-util", "macros", "rt-core", "rt-util", "stream", "tcp"] }

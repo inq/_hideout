@@ -1,5 +1,6 @@
 #![feature(try_blocks)]
 use app::models::User;
+use futures::stream::StreamExt;
 use hideout::util::Config;
 use std::env;
 use std::path::PathBuf;
@@ -12,20 +13,15 @@ async fn test_simple() {
 
     let res: Result<_, failure::Error> = try {
         let config = Config::from_file(path)?;
+        let client = mongodb::Client::with_uri_str(config.db_uri()).await?;
+        let db = client.database(config.db_name());
 
-        let (client, connection) =
-            tokio_postgres::connect(&config.database_string(), tokio_postgres::NoTls).await?;
-
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("connection error: {}", e);
-            }
-        });
-
-        let rows = client.query("SELECT * FROM users", &[]).await?;
-        let _users = rows
-            .iter()
-            .map(|row| User::new(row.get(0), row.get(1), row.get(2), row.get(3)));
+        let rows = db.collection("users").find(None, None).await?;
+        let users = rows
+            .map(|row| bson::from_bson::<User>(bson::Bson::Document(row.ok()?)).ok())
+            .collect::<Vec<_>>()
+            .await;
+        assert_eq!(users.len(), 1);
     };
     assert!(res.is_ok());
 }

@@ -1,5 +1,3 @@
 database:
-  host: localhost
-  user: hideout
-  password: escape
-  dbname: hideout_development
+  uri: mongodb://localhost:27017
+  db_name: hideout_development

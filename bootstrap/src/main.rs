@@ -29,59 +29,27 @@ async fn main() -> Result<(), failure::Error> {
     let config = Config::from_file("config/config.yaml")?;
 
     // Database
-    let (client, connection) =
-        tokio_postgres::connect(&config.database_string(), tokio_postgres::NoTls).await?;
-
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("connection error: {}", e);
-        }
-    });
+    let client = mongodb::Client::with_uri_str(config.db_uri()).await?;
+    let db = client.database(config.db_name());
 
     let fixture = parse_fixture()?;
 
-    let _res = client.query("DROP TABLE IF EXISTS articles", &[]).await?;
+    let _res = db.collection("articles").drop(None).await;
+    let _res = db.create_collection("articles", None).await?;
+    let _res = db.collection("users").drop(None).await;
+    let _res = db.create_collection("users", None).await?;
 
-    let _res = client
-        .query(
-            r#"
-        CREATE TABLE articles (
-            id UUID DEFAULT uuid_generate_v4(),
-            content TEXT NOT NULL,
-            PRIMARY KEY (id)
-        )"#,
-            &[],
-        )
-        .await?;
-
-    let _res = client.query("DROP TABLE IF EXISTS users", &[]).await?;
-
-    let _res = client
-        .query(
-            r#"
-        CREATE TABLE users (
-            id UUID DEFAULT uuid_generate_v4(),
-            email VARCHAR(255) NOT NULL UNIQUE,
-            name VARCHAR(255) NOT NULL,
-            password_hashed VARCHAR(255) NOT NULL,
-            PRIMARY KEY (id)
-        )"#,
-            &[],
-        )
-        .await?;
-
-    for user in fixture.users.iter() {
-        let password_hashed = hideout::util::Password::new(&user.password).hashed();
-
-        let _res = client
-            .query(
-                r#"
-            INSERT INTO users (email, name, password_hashed)
-            VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR)
-            "#,
-                &[&user.email, &user.name, &password_hashed],
-            )
-            .await?;
+    for user_fixture in fixture.users.iter() {
+        let password_hashed = hideout::util::Password::new(&user_fixture.password).hashed();
+        let user = app::models::User::new(
+            None,
+            user_fixture.email.clone(),
+            user_fixture.name.clone(),
+            password_hashed,
+        );
+        if let bson::Bson::Document(document) = bson::to_bson(&user)? {
+            let _res = db.collection("users").insert_one(document, None).await?;
+        }
     }
 
     Ok(())

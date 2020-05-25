@@ -2,7 +2,7 @@ use super::session_store::{self, SessionStore};
 use std::rc::Rc;
 
 pub struct ServerState<S> {
-    pub db: Rc<tokio_postgres::Client>,
+    pub db: mongodb::Database,
     rng: rand::rngs::ThreadRng,
     sessions: SessionStore<S>,
 }
@@ -19,17 +19,11 @@ impl<S> std::clone::Clone for ServerState<S> {
 
 impl<S> ServerState<S> {
     pub async fn new(config: crate::util::Config) -> Result<Self, failure::Error> {
-        let (client, connection) =
-            tokio_postgres::connect(&config.database_string(), tokio_postgres::NoTls).await?;
-
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("connection error: {}", e);
-            }
-        });
+        let client = mongodb::Client::with_uri_str(config.db_uri()).await?;
+        let db = client.database(config.db_name());
 
         Ok(Self {
-            db: Rc::new(client),
+            db,
             sessions: SessionStore::<S>::new(),
             rng: rand::thread_rng(),
         })

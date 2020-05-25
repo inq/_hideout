@@ -10,6 +10,8 @@ enum Error {
     InvalidPayload,
     #[fail(display = "invalid credential")]
     InvalidCredential,
+    #[fail(display = "query error: {:?}", 0)]
+    Query(mongodb::error::Error),
 }
 
 impl Session {
@@ -70,6 +72,7 @@ impl Session {
                     .users()
                     .auth(email, password)
                     .await
+                    .map_err(Error::Query)?
                     .ok_or(Error::InvalidCredential)?;
 
                 models::Session::new(user)
