@@ -1,6 +1,6 @@
 mod cookie;
-mod form_data;
-mod request;
+pub mod form_data;
+pub mod request;
 mod response;
 mod status;
 mod uri;

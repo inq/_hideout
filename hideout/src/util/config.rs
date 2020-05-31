@@ -12,10 +12,16 @@ pub struct Database {
     db_name: String,
 }
 
+#[derive(Debug)]
+pub enum Error {
+    FileRead(std::io::Error),
+    YamlParse(serde_yaml::Error),
+}
+
 impl Config {
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, failure::Error> {
-        let contents = std::fs::read_to_string(path)?;
-        let res = serde_yaml::from_str(&contents)?;
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
+        let contents = std::fs::read_to_string(path).map_err(Error::FileRead)?;
+        let res = serde_yaml::from_str(&contents).map_err(Error::YamlParse)?;
         Ok(res)
     }
 

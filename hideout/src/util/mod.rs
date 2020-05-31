@@ -1,5 +1,5 @@
 mod asset_store;
-mod config;
+pub mod config;
 mod logger;
 mod password;
 mod rc_string;

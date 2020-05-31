@@ -18,11 +18,9 @@ enum WordState {
     Value(u8),
 }
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum Error {
-    #[fail(display = "invalid input")]
     InvalidInput,
-    #[fail(display = "Utf8 error")]
     Utf8,
 }
 

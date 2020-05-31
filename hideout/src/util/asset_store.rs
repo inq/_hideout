@@ -11,12 +11,11 @@ pub struct AssetStore {
     inner: HashMap<String, Asset>,
 }
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum Error {
-    #[fail(display = "invalid filename")]
     Filename,
-    #[fail(display = "invalid unicode")]
     Unicode,
+    FileRead(std::io::Error),
 }
 
 impl AssetStore {
@@ -24,11 +23,7 @@ impl AssetStore {
         Self::default()
     }
 
-    pub fn add<P: AsRef<Path>>(
-        &mut self,
-        path: P,
-        content_type: &str,
-    ) -> Result<(), failure::Error> {
+    pub fn add<P: AsRef<Path>>(&mut self, path: P, content_type: &str) -> Result<(), Error> {
         let key = path
             .as_ref()
             .file_name()
@@ -36,7 +31,7 @@ impl AssetStore {
             .to_str()
             .ok_or(Error::Unicode)?
             .to_string();
-        let buf = std::fs::read(path)?;
+        let buf = std::fs::read(path).map_err(Error::FileRead)?;
         self.inner.insert(
             key,
             Asset {

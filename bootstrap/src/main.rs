@@ -1,43 +1,55 @@
-#[macro_use]
-extern crate failure;
 mod fixture;
 
-use hideout::util::{Config, Logger};
+use hideout::util::{config, Config, Logger};
 
-fn parse_fixture() -> Result<fixture::Fixture, failure::Error> {
+fn parse_fixture() -> Result<fixture::Fixture, Error> {
     use std::fs::File;
 
-    let reader = File::open("config/fixture.yaml")?;
-    let res = serde_yaml::from_reader(reader)?;
+    let reader = File::open("config/fixture.yaml").map_err(Error::FixtureFileOpen)?;
+    let res = serde_yaml::from_reader(reader).map_err(Error::YamlParse)?;
     Ok(res)
 }
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 enum Error {
-    #[fail(display = "set_logger error")]
-    SetLogger,
+    FixtureFileOpen(std::io::Error),
+    SetLogger(log::SetLoggerError),
+    Config(config::Error),
+    YamlParse(serde_yaml::Error),
+    DbConnection(mongodb::error::Error),
+    CollectionCreation(mongodb::error::Error),
+    BsonEncoder(bson::EncoderError),
+    UserInsertion(mongodb::error::Error),
 }
 
 #[tokio::main]
-async fn main() -> Result<(), failure::Error> {
+async fn main() -> Result<(), Error> {
     // Log
     color_backtrace::install();
-    log::set_logger(&Logger).map_err(|_| Error::SetLogger)?;
+    log::set_logger(&Logger).map_err(Error::SetLogger)?;
     log::set_max_level(log::LevelFilter::Debug);
 
     // Config
-    let config = Config::from_file("config/config.yaml")?;
+    let config = Config::from_file("config/config.yaml").map_err(Error::Config)?;
 
     // Database
-    let client = mongodb::Client::with_uri_str(config.db_uri()).await?;
+    let client = mongodb::Client::with_uri_str(config.db_uri())
+        .await
+        .map_err(Error::DbConnection)?;
     let db = client.database(config.db_name());
 
     let fixture = parse_fixture()?;
 
     let _res = db.collection("articles").drop(None).await;
-    let _res = db.create_collection("articles", None).await?;
+    let _res = db
+        .create_collection("articles", None)
+        .await
+        .map_err(Error::CollectionCreation)?;
     let _res = db.collection("users").drop(None).await;
-    let _res = db.create_collection("users", None).await?;
+    let _res = db
+        .create_collection("users", None)
+        .await
+        .map_err(Error::CollectionCreation)?;
 
     for user_fixture in fixture.users.iter() {
         let password_hashed = hideout::util::Password::new(&user_fixture.password).hashed();
@@ -47,8 +59,12 @@ async fn main() -> Result<(), failure::Error> {
             user_fixture.name.clone(),
             password_hashed,
         );
-        if let bson::Bson::Document(document) = bson::to_bson(&user)? {
-            let _res = db.collection("users").insert_one(document, None).await?;
+        if let bson::Bson::Document(document) = bson::to_bson(&user).map_err(Error::BsonEncoder)? {
+            let _res = db
+                .collection("users")
+                .insert_one(document, None)
+                .await
+                .map_err(Error::UserInsertion)?;
         }
     }
 

@@ -1,16 +1,14 @@
 use crate::{models, Context};
-use failure::Fail;
 use hideout::http;
 
 pub(super) struct Session {}
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 enum Error {
-    #[fail(display = "invalid payload")]
-    InvalidPayload,
-    #[fail(display = "invalid credential")]
-    InvalidCredential,
-    #[fail(display = "query error: {:?}", 0)]
+    Payload(hideout::http::form_data::Error),
+    NoEmail,
+    NoPassword,
+    Credential,
     Query(mongodb::error::Error),
 }
 
@@ -62,10 +60,10 @@ impl Session {
 
             let model = crate::models::Model::from_context(&context);
 
-            let form_data = FormData::parse_x_www_form_urlencoded(payload)
-                .map_err(|_| Error::InvalidPayload)?;
-            let email = form_data.get("email").ok_or(Error::InvalidPayload)?;
-            let password = form_data.get("password").ok_or(Error::InvalidPayload)?;
+            let form_data =
+                FormData::parse_x_www_form_urlencoded(payload).map_err(Error::Payload)?;
+            let email = form_data.get("email").ok_or(Error::NoEmail)?;
+            let password = form_data.get("password").ok_or(Error::NoPassword)?;
 
             let session = {
                 let user = model
@@ -73,7 +71,7 @@ impl Session {
                     .auth(email, password)
                     .await
                     .map_err(Error::Query)?
-                    .ok_or(Error::InvalidCredential)?;
+                    .ok_or(Error::Credential)?;
 
                 models::Session::new(user)
             };

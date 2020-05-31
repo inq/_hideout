@@ -7,7 +7,6 @@ edition = "2018"
 [dependencies]
 bson = "*"
 color-backtrace = { version = "*", features = ["failure-bt"] }
-failure = "*"
 hideout = { path = "../hideout" }
 app = { path = "../app" }
 log = "*"

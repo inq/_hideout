@@ -18,7 +18,7 @@ impl<S> std::clone::Clone for ServerState<S> {
 }
 
 impl<S> ServerState<S> {
-    pub async fn new(config: crate::util::Config) -> Result<Self, failure::Error> {
+    pub async fn new(config: crate::util::Config) -> Result<Self, mongodb::error::Error> {
         let client = mongodb::Client::with_uri_str(config.db_uri()).await?;
         let db = client.database(config.db_name());
 

@@ -1,21 +1,20 @@
 use crate::{
-    http::{Cookie, Uri},
+    http::{uri, Cookie, Uri},
     util::RcString,
 };
 use bytes::Bytes;
 use std::fmt::{self, Debug};
+use std::str::Utf8Error;
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum Error {
-    #[fail(display = "invalid value: {}", value)]
-    ValueError { value: String },
-    #[fail(display = "httparse error")]
-    Httparse,
-    #[fail(display = "invalid http method")]
+    Value(String),
+    Uri(uri::Error),
+    Header(Utf8Error),
+    Httparse(httparse::Error),
+    IncompleteHeader,
     HttpMethod,
-    #[fail(display = "invalid http path")]
     HttpPath,
-    #[fail(display = "invalid http version")]
     HttpVersion,
 }
 
@@ -45,9 +44,7 @@ impl std::str::FromStr for Method {
             "TRACE" => Method::Trace,
             "CONNECT" => Method::Connect,
             etc => {
-                return Err(Error::ValueError {
-                    value: etc.to_string(),
-                })
+                return Err(Error::Value(etc.to_string()));
             }
         })
     }
@@ -76,7 +73,7 @@ pub struct RequestLine {
 }
 
 impl RequestLine {
-    pub fn from_parsed(buffer: &Bytes, parsed: &httparse::Request) -> Result<Self, failure::Error> {
+    pub fn from_parsed(buffer: &Bytes, parsed: &httparse::Request) -> Result<Self, Error> {
         use std::str::FromStr;
 
         let method = Method::from_str(parsed.method.ok_or(Error::HttpMethod)?)?;
@@ -87,7 +84,7 @@ impl RequestLine {
             let rc_string = RcString::from_utf8_unsafe(
                 buffer.slice_ref(parsed.path.ok_or(Error::HttpMethod)?.as_bytes()),
             );
-            Uri::try_from(rc_string)?
+            Uri::try_from(rc_string).map_err(Error::Uri)?
         };
         let version = parsed.version.ok_or(Error::HttpVersion)?.into();
 
@@ -128,22 +125,24 @@ impl Debug for Header {
 }
 
 impl Request {
-    pub fn parse(buffer: Bytes) -> Result<Request, failure::Error> {
+    pub fn parse(buffer: Bytes) -> Result<Request, Error> {
         let mut headers = [httparse::EMPTY_HEADER; 32];
         let mut req = httparse::Request::new(&mut headers);
-        let len = if let httparse::Status::Complete(len) = req.parse(&buffer)? {
-            len
-        } else {
-            return Err(Error::Httparse.into());
-        };
+        let len =
+            if let httparse::Status::Complete(len) = req.parse(&buffer).map_err(Error::Httparse)? {
+                len
+            } else {
+                return Err(Error::IncompleteHeader);
+            };
         let request_line = RequestLine::from_parsed(&buffer, &req)?;
         let headers = req
             .headers
             .iter()
-            .map(|header| -> Result<Header, failure::Error> {
+            .map(|header| -> Result<Header, Error> {
                 Ok(Header {
                     name: RcString::from_utf8_unsafe(buffer.slice_ref(header.name.as_bytes())),
-                    value: RcString::from_utf8(buffer.slice_ref(header.value))?,
+                    value: RcString::from_utf8(buffer.slice_ref(header.value))
+                        .map_err(Error::Header)?,
                 })
             })
             .collect::<Result<_, _>>()?;

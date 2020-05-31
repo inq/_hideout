@@ -1,6 +1,6 @@
 use crate::util::RcString;
-use failure::Fail;
 use std::convert;
+use std::str::Utf8Error;
 
 #[derive(Debug)]
 pub enum State {
@@ -11,10 +11,10 @@ pub enum State {
     Fragment(usize),
 }
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum Error {
-    #[fail(display = "invalid state: {:?}, {:?} at {}", state, chr, at)]
-    InvalidState { state: State, chr: char, at: usize },
+    State { state: State, chr: char, at: usize },
+    Utf8(Utf8Error),
 }
 
 #[derive(Debug)]
@@ -123,9 +123,9 @@ mod tests {
     fn it_works() {
         use std::convert::TryFrom;
 
-        let res: Result<(), failure::Error> = try {
+        let res: Result<(), Error> = try {
             let bytes = bytes::Bytes::from_static(b"/hello/world?param=?&?=?#fragment=#123");
-            let rc_string = RcString::from_utf8(bytes)?;
+            let rc_string = RcString::from_utf8(bytes).map_err(Error::Utf8)?;
             let uri = Uri::try_from(rc_string)?;
             assert!(matches!(uri.fragment, Some(fragment) if fragment.as_ref() == "fragment=#123"));
         };
