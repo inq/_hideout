@@ -13,7 +13,7 @@ log = "*"
 rand = "*"
 serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
-sha2 = "*"
+ring = "*"
 tokio = { version = "*", features = ["io-util", "rt-core", "rt-util", "stream", "tcp"] }
 
 [dependencies.mongodb]

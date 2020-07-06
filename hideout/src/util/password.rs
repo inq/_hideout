@@ -16,12 +16,10 @@ pub struct Password {
 
 impl Password {
     pub fn new(orig: &str) -> Self {
-        use sha2::{Digest, Sha256};
-        let mut hasher = Sha256::new();
-        hasher.input(orig);
-        let result = hasher.result();
+        use ring::digest::{digest, SHA256};
+        let hashed = digest(&SHA256, orig.as_ref());
         Self {
-            hashed: HexBytes(&result).to_string(),
+            hashed: HexBytes(hashed.as_ref()).to_string(),
         }
     }
 
