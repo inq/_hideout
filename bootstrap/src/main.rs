@@ -18,7 +18,7 @@ enum Error {
     YamlParse(serde_yaml::Error),
     DbConnection(mongodb::error::Error),
     CollectionCreation(mongodb::error::Error),
-    BsonEncoder(bson::EncoderError),
+    BsonSerialize(bson::ser::Error),
     UserInsertion(mongodb::error::Error),
 }
 
@@ -59,7 +59,9 @@ async fn main() -> Result<(), Error> {
             user_fixture.name.clone(),
             password_hashed,
         );
-        if let bson::Bson::Document(document) = bson::to_bson(&user).map_err(Error::BsonEncoder)? {
+        if let bson::Bson::Document(document) =
+            bson::to_bson(&user).map_err(Error::BsonSerialize)?
+        {
             let _res = db
                 .collection("users")
                 .insert_one(document, None)
