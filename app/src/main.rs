@@ -31,7 +31,10 @@ async fn prepare_buffer(stream: &mut TcpStream) -> Result<Bytes, Error> {
 fn unwrap_response(response: http::Result<http::Response>) -> http::Response {
     match response {
         Ok(res) => res,
-        Err(http::Error::NotFound { uri }) => app::handlers::not_found(&uri),
+        Err(err) => match err {
+            http::Error::Unauthorized { uri } => app::handlers::unauthorized(&uri),
+            http::Error::NotFound { uri } => app::handlers::not_found(&uri),
+        },
     }
 }
 

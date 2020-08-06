@@ -19,7 +19,7 @@ enum Error {
     DbConnection(mongodb::error::Error),
     CollectionCreation(mongodb::error::Error),
     BsonSerialize(bson::ser::Error),
-    UserInsertion(mongodb::error::Error),
+    Insertion(mongodb::error::Error),
 }
 
 #[tokio::main]
@@ -50,6 +50,11 @@ async fn main() -> Result<(), Error> {
         .create_collection("users", None)
         .await
         .map_err(Error::CollectionCreation)?;
+    let _res = db.collection("workouts").drop(None).await;
+    let _res = db
+        .create_collection("workouts", None)
+        .await
+        .map_err(Error::CollectionCreation)?;
 
     for user_fixture in fixture.users.iter() {
         let password_hashed = hideout::util::Password::new(&user_fixture.password).hashed();
@@ -66,7 +71,25 @@ async fn main() -> Result<(), Error> {
                 .collection("users")
                 .insert_one(document, None)
                 .await
-                .map_err(Error::UserInsertion)?;
+                .map_err(Error::Insertion)?;
+        }
+    }
+
+    for workout_fixture in fixture.workouts.iter() {
+        let workout = app::models::Workout::new(
+            None,
+            workout_fixture.name.clone(),
+            workout_fixture.description.clone(),
+            workout_fixture.with_barbell,
+        );
+        if let bson::Bson::Document(document) =
+            bson::to_bson(&workout).map_err(Error::BsonSerialize)?
+        {
+            let _res = db
+                .collection("workouts")
+                .insert_one(document, None)
+                .await
+                .map_err(Error::Insertion)?;
         }
     }
 

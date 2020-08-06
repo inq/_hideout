@@ -13,12 +13,14 @@ pub use status::StatusCode;
 pub use uri::Uri;
 
 pub enum Error {
+    Unauthorized { uri: String },
     NotFound { uri: String },
 }
 
 impl Error {
     pub fn status_code(&self) -> i32 {
         match self {
+            Error::Unauthorized { .. } => 401,
             Error::NotFound { .. } => 404,
         }
     }

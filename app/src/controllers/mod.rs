@@ -1,5 +1,6 @@
 mod articles;
 mod assets;
+mod private;
 mod root;
 mod session;
 

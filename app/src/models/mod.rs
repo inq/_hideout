@@ -1,8 +1,10 @@
 mod session;
 mod user;
+mod workout;
 
 pub use session::Session;
 pub use user::{User, Users};
+pub use workout::{Workout, Workouts};
 
 pub struct Model {
     db: mongodb::Database,
@@ -17,5 +19,9 @@ impl Model {
 
     pub fn users(self) -> Users {
         Users { db: self.db }
+    }
+
+    pub fn workouts(self) -> Workouts {
+        Workouts { db: self.db }
     }
 }

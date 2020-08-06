@@ -41,8 +41,8 @@ impl User {
         email: String,
         name: String,
         password_hashed: String,
-    ) -> User {
-        User {
+    ) -> Self {
+        Self {
             id,
             email,
             name,

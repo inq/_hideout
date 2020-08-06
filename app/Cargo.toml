@@ -8,6 +8,7 @@ edition = "2018"
 bson = "*"
 bytes = "*"
 color-backtrace = { version = "*", features = ["failure-bt"] }
+futures = "*"
 hideout = { path = "../hideout" }
 lazy_static = "*"
 log = "*"
