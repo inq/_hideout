@@ -102,7 +102,8 @@ impl Root {
                     margin: "20px auto"
                     padding: "10px"
                     width: "50%"
-                    backgroundColor: "#f0f0f0"
+                    border: "1px solid #ddd"
+                    borderRadius: "0.2em"
                 article
                     input
                         display: "block"
@@ -113,7 +114,14 @@ impl Root {
                         boxSizing: "border-box"
                         padding: "0 2em"
                         border: "1px solid #dddddd"
-                        borderRadius: "0.5em"
+                        borderLeft: "0px"
+                        borderTop: "0px"
+                        borderRight: "0px"
+                    .submit
+                        color: "#fff"
+                        width: "40%"
+                        margin: "2em 10% 2em auto"
+                        borderRadius: "0.3em"
             )
             .to_string(),
         )

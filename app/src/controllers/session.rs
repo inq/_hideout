@@ -43,11 +43,11 @@ impl Session {
                     article.signin
                         header
                             h1
-                                "Signin"
+                                "SIGN IN"
                         form action="/session/create" method="POST"
-                            input type="text" name="email" placeholder="email"
-                            input type="password" name="password" placeholder="password"
-                            input type="submit"
+                            input type="text" name="email" placeholder="EMAIL"
+                            input type="password" name="password" placeholder="PASSWORD"
+                            input.submit type="submit" value="SUBMIT"
                 )
                 .to_string(),
             ),
