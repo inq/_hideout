@@ -50,13 +50,22 @@ async fn process(state: app::ServerState, mut stream: TcpStream) -> Result<(), E
         let mut payload = Vec::with_capacity(content_length);
         payload.extend_from_slice(&context.request.body);
         let offset = payload.len();
-        log::info!("Reading content: Content-Length: {}", content_length);
+        log::info!(
+            "Reading content: Content-Length: {}, offset: {}",
+            content_length,
+            offset
+        );
         let len = (&mut stream)
             .take((content_length - offset) as u64)
-            .read_to_end(&mut payload)
+            .read(&mut payload[offset..])
             .await
             .map_err(Error::Io)?;
-        assert!(len == content_length, "{}, {}", content_length, len);
+        assert!(
+            len == content_length - offset,
+            "{}, {}",
+            content_length - offset,
+            len
+        );
         payload
     } else {
         vec![]
@@ -64,11 +73,14 @@ async fn process(state: app::ServerState, mut stream: TcpStream) -> Result<(), E
 
     let response = app::controllers::Root::serve(context, &payload).await;
     let response = unwrap_response(response);
-    stream
-        .write(response.header.to_string().as_bytes())
+    let _ = stream
+        .write_all(response.header.to_string().as_bytes())
         .await
         .map_err(Error::Io)?;
-    stream.write(&response.payload).await.map_err(Error::Io)?;
+    let _ = stream
+        .write_all(&response.payload)
+        .await
+        .map_err(Error::Io)?;
     Ok(())
 }
 
@@ -84,7 +96,7 @@ async fn _main() -> Result<(), Error> {
         .await
         .map_err(Error::Database)?;
 
-    let addr = (std::net::Ipv4Addr::new(127, 0, 0, 1), 8080);
+    let addr = (std::net::Ipv4Addr::new(127, 0, 0, 1), 4040);
     log::info!("Listening on: {:?}", addr);
     let mut listener = TcpListener::bind(addr).await.map_err(Error::Io)?;
 
