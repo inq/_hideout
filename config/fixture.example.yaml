@@ -2,3 +2,31 @@ users:
   - email: gofiri@gmail.com
     name: Inkyu Lee
     password: 0000
+workouts:
+  - name: Deadlift
+    description: 데드리프트
+    withBarbell: true
+  - name: Backsquat
+    description: 백스쿼트
+    withBarbell: true
+  - name: Back pause squat
+    description: 정지 백스쿼트
+    withBarbell: true
+  - name: Frontsquat
+    description: 프론트스쿼트
+    withBarbell: true
+  - name: Front pause squat
+    description: 정지 프론트스쿼트
+    withBarbell: true
+  - name: Clean
+    description: 클린
+    withBarbell: true
+  - name: Jerk
+    description: 저크
+    withBarbell: true
+  - name: Clean & Jerk
+    description: 클린&저크
+    withBarbell: true
+  - name: Snatch
+    description: 스내치
+    withBarbell: true
