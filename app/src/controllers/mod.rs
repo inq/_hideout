@@ -1,11 +1,13 @@
 mod articles;
 mod assets;
+mod dailies;
 mod private;
 mod root;
 mod session;
 
 pub(self) use articles::Articles;
 pub(self) use assets::Assets;
+pub(self) use dailies::Dailies;
 pub use root::Root;
 pub(self) use session::Session;
 

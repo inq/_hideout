@@ -1,7 +1,9 @@
+mod daily_activity;
 mod session;
 mod user;
 mod workout;
 
+pub use daily_activity::{DailyActivities, DailyActivity};
 pub use session::Session;
 pub use user::{User, Users};
 pub use workout::{Workout, Workouts};

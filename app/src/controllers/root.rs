@@ -13,6 +13,7 @@ impl Root {
             match path.as_ref() {
                 "private" => super::private::Private::serve_inner(context, payload, idx + 1).await,
                 "articles" => super::Articles::serve_inner(context, payload, idx + 1).await,
+                "dailies" => super::Dailies::serve_inner(context, payload, idx + 1).await,
                 "assets" => super::Assets::serve_inner(context, payload, idx + 1).await,
                 "session" => super::Session::serve_inner(context, payload, idx + 1).await,
                 "main.css" => Ok(Self::stylesheet()),
