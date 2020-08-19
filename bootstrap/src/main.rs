@@ -56,6 +56,12 @@ async fn main() -> Result<(), Error> {
         .await
         .map_err(Error::CollectionCreation)?;
 
+    let _res = db.collection("dailies").drop(None).await;
+    let _res = db
+        .create_collection("dailies", None)
+        .await
+        .map_err(Error::CollectionCreation)?;
+
     for user_fixture in fixture.users.iter() {
         let password_hashed = hideout::util::Password::new(&user_fixture.password).hashed();
         let user = app::models::User::new(
