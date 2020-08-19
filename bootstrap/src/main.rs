@@ -56,9 +56,9 @@ async fn main() -> Result<(), Error> {
         .await
         .map_err(Error::CollectionCreation)?;
 
-    let _res = db.collection("dailies").drop(None).await;
+    let _res = db.collection("dailyActivities").drop(None).await;
     let _res = db
-        .create_collection("dailies", None)
+        .create_collection("dailyActivities", None)
         .await
         .map_err(Error::CollectionCreation)?;
 
