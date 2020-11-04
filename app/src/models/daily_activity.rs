@@ -1,19 +1,17 @@
-use bson::doc;
+use bson::{doc, to_bson, Bson};
 use serde::{Deserialize, Serialize};
 
 pub struct DailyActivities {
     pub(super) db: mongodb::Database,
 }
 
+const COLLECTION_NAME: &str = "dailyActivities";
+
 impl DailyActivities {
     pub async fn all(self) -> Result<Vec<DailyActivity>, mongodb::error::Error> {
         use futures::StreamExt;
 
-        let cursor = self
-            .db
-            .collection("dailyActivities")
-            .find(None, None)
-            .await?;
+        let cursor = self.db.collection(COLLECTION_NAME).find(None, None).await?;
         let res: Vec<Result<_, _>> = cursor.collect().await;
         res.into_iter()
             .map(|doc| -> Result<DailyActivity, _> {
@@ -21,6 +19,30 @@ impl DailyActivities {
                     .map_err(|e| mongodb::error::ErrorKind::BsonDecode(e).into())
             })
             .collect()
+    }
+
+    pub async fn create(
+        self,
+        date: chrono::DateTime<chrono::Utc>,
+    ) -> Result<(), mongodb::error::Error> {
+        println!("{:?}", date);
+
+        if let Bson::Document(document) = to_bson(&DailyActivity {
+            id: None,
+            date: date.into(),
+            workouts: vec![],
+        })
+        .unwrap()
+        {
+            let _res = self
+                .db
+                .collection(COLLECTION_NAME)
+                .insert_one(document, None)
+                .await?;
+            Ok(())
+        } else {
+            unreachable!();
+        }
     }
 }
 

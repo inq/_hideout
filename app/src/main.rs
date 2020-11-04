@@ -47,9 +47,8 @@ async fn process(state: app::ServerState, mut stream: TcpStream) -> Result<(), E
     let context = app::Context::new(state, request);
 
     let payload = if let Some(content_length) = context.request.content_length() {
-        let mut payload = Vec::with_capacity(content_length);
-        payload.extend_from_slice(&context.request.body);
-        let offset = payload.len();
+        let mut payload_extra = Vec::with_capacity(content_length);
+        let offset = context.request.body.len();
         log::info!(
             "Reading content: Content-Length: {}, offset: {}",
             content_length,
@@ -57,7 +56,7 @@ async fn process(state: app::ServerState, mut stream: TcpStream) -> Result<(), E
         );
         let len = (&mut stream)
             .take((content_length - offset) as u64)
-            .read(&mut payload[offset..])
+            .read_to_end(&mut payload_extra)
             .await
             .map_err(Error::Io)?;
         assert!(
@@ -66,7 +65,9 @@ async fn process(state: app::ServerState, mut stream: TcpStream) -> Result<(), E
             content_length - offset,
             len
         );
-        payload
+        let mut res = context.request.body.to_vec();
+        res.append(&mut payload_extra);
+        res
     } else {
         vec![]
     };

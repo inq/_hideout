@@ -19,6 +19,10 @@ impl Model {
         }
     }
 
+    pub fn daily_activities(self) -> DailyActivities {
+        DailyActivities { db: self.db }
+    }
+
     pub fn users(self) -> Users {
         Users { db: self.db }
     }

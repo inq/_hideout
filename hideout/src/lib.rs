@@ -1,4 +1,4 @@
-#![feature(or_patterns, proc_macro_hygiene, ptr_offset_from, try_blocks)]
+#![feature(or_patterns, proc_macro_hygiene, try_blocks)]
 
 pub mod context;
 pub mod http;
