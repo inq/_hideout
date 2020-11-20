@@ -1,17 +1,15 @@
 mod articles;
 mod assets;
-mod dailies;
 mod private;
 mod root;
 mod session;
 
-pub(self) use articles::Articles;
-pub(self) use assets::Assets;
-pub(self) use dailies::Dailies;
+use articles::Articles;
+use assets::Assets;
 pub use root::Root;
-pub(self) use session::Session;
+use session::Session;
 
-pub(self) fn render_with_layout(context: &crate::Context, inner: &str) -> String {
+fn render_with_layout(context: &crate::Context, inner: &str) -> String {
     let email = context
         .session
         .as_ref()

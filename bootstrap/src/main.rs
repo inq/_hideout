@@ -81,23 +81,5 @@ async fn main() -> Result<(), Error> {
         }
     }
 
-    for workout_fixture in fixture.workouts.iter() {
-        let workout = app::models::Workout::new(
-            None,
-            workout_fixture.name.clone(),
-            workout_fixture.description.clone(),
-            workout_fixture.with_barbell,
-        );
-        if let bson::Bson::Document(document) =
-            bson::to_bson(&workout).map_err(Error::BsonSerialize)?
-        {
-            let _res = db
-                .collection("workouts")
-                .insert_one(document, None)
-                .await
-                .map_err(Error::Insertion)?;
-        }
-    }
-
     Ok(())
 }

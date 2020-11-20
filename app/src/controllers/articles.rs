@@ -12,6 +12,7 @@ impl Articles {
         if let Some(path) = context.request.uri().nth_path(idx) {
             match path.as_ref() {
                 "list" => Ok(Self::list(context)),
+                "new" => Ok(Self::new(context)),
                 article_id => Ok(Self::show(context, article_id)),
             }
         } else {
@@ -19,6 +20,21 @@ impl Articles {
                 uri: context.request.uri().as_ref().to_string(),
             })
         }
+    }
+
+    fn new(context: Context) -> http::Response {
+        http::Response::html(
+            200,
+            vec![],
+            &super::render_with_layout(
+                &context,
+                &tent::html!(
+                    article
+                        span.label {format!("New Article")}
+                )
+                .to_string(),
+            ),
+        )
     }
 
     fn show(context: Context, article_id: &str) -> http::Response {
@@ -36,7 +52,7 @@ impl Articles {
         )
     }
 
-    fn list(context: Context) -> http::Response {
+    pub(super) fn list(context: Context) -> http::Response {
         http::Response::html(
             200,
             vec![],
