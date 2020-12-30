@@ -12,7 +12,7 @@ impl<S> std::clone::Clone for ServerState<S> {
         Self {
             db: self.db.clone(),
             sessions: self.sessions.clone(),
-            rng: self.rng,
+            rng: self.rng.clone(),
         }
     }
 }
