@@ -10,7 +10,6 @@ const HEADER_SIZE: usize = 2048;
 #[derive(Debug)]
 enum Error {
     SetLogger(log::SetLoggerError),
-    StreamExhausted,
     Io(std::io::Error),
     Config(config::Error),
     Database(mongodb::error::Error),
@@ -86,8 +85,6 @@ async fn process(state: app::ServerState, mut stream: TcpStream) -> Result<(), E
 }
 
 async fn _main() -> Result<(), Error> {
-    use tokio::stream::StreamExt;
-
     color_backtrace::install();
     log::set_logger(&Logger).map_err(Error::SetLogger)?;
     log::set_max_level(log::LevelFilter::Debug);
@@ -99,16 +96,10 @@ async fn _main() -> Result<(), Error> {
 
     let addr = (std::net::Ipv4Addr::new(127, 0, 0, 1), 4040);
     log::info!("Listening on: {:?}", addr);
-    let mut listener = TcpListener::bind(addr).await.map_err(Error::Io)?;
-
-    let mut incoming = listener.incoming();
+    let listener = TcpListener::bind(addr).await.map_err(Error::Io)?;
 
     loop {
-        let stream = incoming
-            .next()
-            .await
-            .ok_or(Error::StreamExhausted)?
-            .map_err(Error::Io)?;
+        let (stream, _addr) = listener.accept().await.map_err(Error::Io)?;
         tokio::task::spawn_local(process(state.clone(), stream));
     }
 }

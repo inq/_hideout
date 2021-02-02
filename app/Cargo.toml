@@ -16,13 +16,13 @@ log = "*"
 serde = "*"
 tent = "*"
 uuid = "*"
-tokio = { version = "*", features = ["io-util", "rt-core", "rt-util", "stream", "tcp"] }
+tokio = { version = "1", features = ["io-util", "rt", "net", "time"] }
 
 [dependencies.mongodb]
-version = "*"
+version = "2.0.0-alpha"
 default-features = false
 features = ["tokio-runtime"]
 
 [dev-dependencies]
-tokio = { version = "*", features = ["io-util", "macros", "rt-core", "rt-util", "stream", "tcp"] }
+tokio = { version = "1", features = ["io-util", "macros", "rt", "net"] }
 futures = "*"
