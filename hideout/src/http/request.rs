@@ -79,8 +79,6 @@ impl RequestLine {
         let method = Method::from_str(parsed.method.ok_or(Error::HttpMethod)?)?;
 
         let uri = {
-            use std::convert::TryFrom;
-
             let rc_string = RcString::from_utf8_unsafe(
                 buffer.slice_ref(parsed.path.ok_or(Error::HttpMethod)?.as_bytes()),
             );

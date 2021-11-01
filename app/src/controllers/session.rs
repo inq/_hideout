@@ -20,8 +20,8 @@ impl Session {
     ) -> http::Result<http::Response> {
         if let Some(path) = context.request.uri().nth_path(idx) {
             match path.as_ref() {
-                "new" => Ok(Self::session_new(context)),
-                "create" => Ok(Self::create(context, payload).await),
+                "new" => Ok(Self::action_new(context)),
+                "create" => Ok(Self::action_create(context, payload).await),
                 _ => Err(http::Error::NotFound {
                     uri: context.request.uri().as_ref().to_string(),
                 }),
@@ -33,7 +33,7 @@ impl Session {
         }
     }
 
-    fn session_new(context: Context) -> http::Response {
+    fn action_new(context: Context) -> http::Response {
         http::Response::html(
             200,
             vec![],
@@ -54,7 +54,7 @@ impl Session {
         )
     }
 
-    async fn create(mut context: Context, payload: &[u8]) -> http::Response {
+    async fn action_create(mut context: Context, payload: &[u8]) -> http::Response {
         let inner: Result<http::Response, Error> = try {
             use hideout::http::FormData;
 

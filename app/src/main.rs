@@ -105,8 +105,8 @@ async fn _main() -> Result<(), Error> {
 }
 
 fn main() -> Result<(), Error> {
-    let mut rt = tokio::runtime::Runtime::new().map_err(Error::Io)?;
-    tokio::task::LocalSet::new().block_on(&mut rt, _main())?;
+    let rt = tokio::runtime::Runtime::new().map_err(Error::Io)?;
+    tokio::task::LocalSet::new().block_on(&rt, _main())?;
 
     Ok(())
 }

@@ -11,9 +11,9 @@ impl Articles {
     ) -> http::Result<http::Response> {
         if let Some(path) = context.request.uri().nth_path(idx) {
             match path.as_ref() {
-                "list" => Ok(Self::list(context)),
-                "new" => Ok(Self::new(context)),
-                article_id => Ok(Self::show(context, article_id)),
+                "list" => Ok(Self::action_list(context)),
+                "new" => Ok(Self::action_new(context)),
+                article_id => Ok(Self::action_show(context, article_id)),
             }
         } else {
             Err(http::Error::NotFound {
@@ -22,7 +22,7 @@ impl Articles {
         }
     }
 
-    fn new(context: Context) -> http::Response {
+    fn action_new(context: Context) -> http::Response {
         http::Response::html(
             200,
             vec![],
@@ -37,7 +37,7 @@ impl Articles {
         )
     }
 
-    fn show(context: Context, article_id: &str) -> http::Response {
+    fn action_show(context: Context, article_id: &str) -> http::Response {
         http::Response::html(
             200,
             vec![],
@@ -52,7 +52,7 @@ impl Articles {
         )
     }
 
-    pub(super) fn list(context: Context) -> http::Response {
+    pub(super) fn action_list(context: Context) -> http::Response {
         http::Response::html(
             200,
             vec![],

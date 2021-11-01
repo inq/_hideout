@@ -21,7 +21,7 @@ impl Root {
                 }),
             }
         } else {
-            Ok(super::Articles::list(context))
+            Ok(super::Articles::action_list(context))
         }
     }
 

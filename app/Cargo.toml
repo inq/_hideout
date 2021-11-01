@@ -2,7 +2,7 @@
 name = "app"
 version = "0.1.0"
 authors = ["inkyu <gofiri@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 bson = "*"
@@ -19,7 +19,7 @@ uuid = "*"
 tokio = { version = "1", features = ["io-util", "rt", "net", "time"] }
 
 [dependencies.mongodb]
-version = "2.0.0-alpha"
+version = "*"
 default-features = false
 features = ["tokio-runtime"]
 

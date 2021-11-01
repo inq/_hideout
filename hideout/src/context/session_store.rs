@@ -19,7 +19,7 @@ impl AsRef<str> for Key {
 
 impl AsRef<Key> for &Key {
     fn as_ref(&self) -> &Key {
-        &self
+        self
     }
 }
 
@@ -27,7 +27,7 @@ pub struct KeyRef<'a>(&'a str);
 
 impl<'a> AsRef<str> for KeyRef<'a> {
     fn as_ref(&self) -> &str {
-        &self.0
+        self.0
     }
 }
 
