@@ -1,5 +1,6 @@
 mod fixture;
 
+use app::models::User;
 use hideout::util::{config, Config, Logger};
 
 fn parse_fixture() -> Result<fixture::Fixture, Error> {
@@ -40,25 +41,9 @@ async fn main() -> Result<(), Error> {
 
     let fixture = parse_fixture()?;
 
-    let _res = db.collection("articles").drop(None).await;
-    let _res = db
-        .create_collection("articles", None)
-        .await
-        .map_err(Error::CollectionCreation)?;
-    let _res = db.collection("users").drop(None).await;
+    let _res = db.collection::<User>("users").drop(None).await;
     let _res = db
         .create_collection("users", None)
-        .await
-        .map_err(Error::CollectionCreation)?;
-    let _res = db.collection("workouts").drop(None).await;
-    let _res = db
-        .create_collection("workouts", None)
-        .await
-        .map_err(Error::CollectionCreation)?;
-
-    let _res = db.collection("dailyActivities").drop(None).await;
-    let _res = db
-        .create_collection("dailyActivities", None)
         .await
         .map_err(Error::CollectionCreation)?;
 
